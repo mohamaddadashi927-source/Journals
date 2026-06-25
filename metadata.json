@@ -1,0 +1,6 @@
+{
+  "name": "Trading Journal",
+  "description": "A feature-rich offline-first trading journal and portfolio performance dashboard for financial traders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
