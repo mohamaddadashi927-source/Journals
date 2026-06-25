@@ -37,7 +37,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -79,6 +87,8 @@ fun AddEditTradeScreen(
     var dateTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var feesStr by remember { mutableStateOf("") }
     var reasonText by remember { mutableStateOf("") }
+    var richNotesValue by remember { mutableStateOf(TextFieldValue("")) }
+    var emotionalStateSelected by remember { mutableStateOf("") }
     var imagePathState by remember { mutableStateOf<String?>(null) }
     var selectedTagsList by remember { mutableStateOf(mutableStateListOf<String>()) }
     var postNotesText by remember { mutableStateOf("") }
@@ -106,6 +116,9 @@ fun AddEditTradeScreen(
                     dateTime = trade.dateTime
                     feesStr = trade.fees.toString()
                     reasonText = trade.reason
+                    val notes = if (trade.richNotes.isNotEmpty()) trade.richNotes else trade.reason
+                    richNotesValue = TextFieldValue(text = notes, selection = TextRange(notes.length))
+                    emotionalStateSelected = trade.emotionalState
                     imagePathState = trade.imagePath
                     postNotesText = trade.postTradeNotes
                     
@@ -436,26 +449,192 @@ fun AddEditTradeScreen(
                     }
                 }
 
-                // 6. Reason and AI Voice Transcription
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // 6. Detailed Notes & Emotional State & Rich Text Toolbar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Emotional State Label
                     Text(
-                        "دلیل ورود به معامله (یادداشت)",
+                        "حالت روحی شما حین ورود به معامله",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    OutlinedTextField(
-                        value = reasonText,
-                        onValueChange = { reasonText = it },
-                        placeholder = { Text("چرا این موقعیت معاملاتی را باز کردید؟ استراتژی، نقاط قوت چارت، جو بازار...") },
+                    // Emotional State Selection Chips row
+                    val emotions = listOf(
+                        Triple("CALM", "🟢 آرام", EmeraldGreen),
+                        Triple("CONFIDENT", "🔵 مطمئن", MaterialTheme.colorScheme.primary),
+                        Triple("EXCITED", "🟡 هیجان‌زده", Color(0xFFFFB300)),
+                        Triple("ANXIOUS", "🟠 مضطرب", Color(0xFFFF6D00)),
+                        Triple("GREEDY", "🔴 حریص", CrimsonRed),
+                        Triple("FEARFUL", "🟣 ترسیده", Color(0xFF9C27B0))
+                    )
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        emotions.forEach { (id, label, color) ->
+                            val isSelected = emotionalStateSelected == id
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { emotionalStateSelected = if (isSelected) "" else id },
+                                label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = color.copy(alpha = 0.15f),
+                                    selectedLabelColor = color
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    selected = isSelected,
+                                    enabled = true,
+                                    selectedBorderColor = color,
+                                    selectedBorderWidth = 2.dp
+                                )
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+
+                    Text(
+                        "دلایل ورود و یادداشت تفصیلی (با امکان قالب‌بندی متنی)",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    // Formatting Toolbar row
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(110.dp),
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val formats = listOf(
+                            Triple("B", "**", "**"),   // Bold
+                            Triple("I", "*", "*"),     // Italic
+                            Triple("لیست", "- ", ""),  // List
+                            Triple("نقل", "> ", ""),   // Quote
+                            Triple("کد", "`", "`")      // Code
+                        )
+                        formats.forEach { (label, prefix, suffix) ->
+                            FilledTonalButton(
+                                onClick = {
+                                    val text = richNotesValue.text
+                                    val selection = richNotesValue.selection
+                                    val selectedText = text.substring(selection.start, selection.end)
+                                    val replacement = "$prefix$selectedText$suffix"
+                                    val newText = text.replaceRange(selection.start, selection.end, replacement)
+                                    val newSelectionStart = selection.start + prefix.length
+                                    val newSelectionEnd = newSelectionStart + selectedText.length
+                                    richNotesValue = TextFieldValue(
+                                        text = newText,
+                                        selection = TextRange(newSelectionStart, newSelectionEnd)
+                                    )
+                                },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                modifier = Modifier.height(30.dp),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // Rich notes TextField
+                    OutlinedTextField(
+                        value = richNotesValue,
+                        onValueChange = { richNotesValue = it },
+                        placeholder = { Text("دلایل ورود، استراتژی تحلیل، احساسات و جزئیات ترید را با قالب‌بندی غنی ثبت کنید...") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                        )
                     )
+
+                    // Live Markdown Styled Preview Card
+                    if (richNotesValue.text.isNotEmpty()) {
+                        var isPreviewExpanded by remember { mutableStateOf(false) }
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            border = CardDefaults.outlinedCardBorder().copy(
+                                width = 1.dp,
+                                brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { isPreviewExpanded = !isPreviewExpanded },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Visibility,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            "پیش‌نمایش زنده نوشته غنی شده",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = if (isPreviewExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                if (isPreviewExpanded) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.05f))
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = parseMarkdownToAnnotatedString(richNotesValue.text, MaterialTheme.colorScheme.primary),
+                                        fontSize = 12.sp,
+                                        lineHeight = 22.sp,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // 7. Dynamic Tags Selection & Add Tag
@@ -634,10 +813,12 @@ fun AddEditTradeScreen(
                                 exitPrice = exit,
                                 dateTime = dateTime,
                                 fees = fees,
-                                reason = reasonText,
+                                reason = richNotesValue.text,
                                 imagePath = imagePathState,
                                 tags = tagsJoined,
-                                postTradeNotes = postNotesText
+                                postTradeNotes = postNotesText,
+                                richNotes = richNotesValue.text,
+                                emotionalState = emotionalStateSelected
                             )
 
                             if (tradeId == null) {
@@ -795,4 +976,95 @@ fun Image(
         modifier = modifier,
         contentScale = contentScale
     )
+}
+
+fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
+    return buildAnnotatedString {
+        val lines = text.split("\n")
+        lines.forEachIndexed { lineIndex, line ->
+            var currentLine = line
+            var isBullet = false
+            var isQuote = false
+            
+            if (currentLine.startsWith("- ")) {
+                isBullet = true
+                currentLine = currentLine.substring(2)
+            } else if (currentLine.startsWith("> ")) {
+                isQuote = true
+                currentLine = currentLine.substring(2)
+            }
+            
+            if (isBullet) {
+                append("• ")
+            }
+            
+            val startLength = length
+            
+            // Basic parser for Bold (**) and Italic (*) and Code (`)
+            var i = 0
+            while (i < currentLine.length) {
+                when {
+                    currentLine.startsWith("**", i) -> {
+                        val endIdx = currentLine.indexOf("**", i + 2)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(currentLine.substring(i + 2, endIdx))
+                            }
+                            i = endIdx + 2
+                        } else {
+                            append("**")
+                            i += 2
+                        }
+                    }
+                    currentLine.startsWith("*", i) -> {
+                        val endIdx = currentLine.indexOf("*", i + 1)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                                append(currentLine.substring(i + 1, endIdx))
+                            }
+                            i = endIdx + 1
+                        } else {
+                            append("*")
+                            i += 1
+                        }
+                    }
+                    currentLine.startsWith("`", i) -> {
+                        val endIdx = currentLine.indexOf("`", i + 1)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(
+                                fontFamily = FontFamily.Monospace,
+                                background = primaryColor.copy(alpha = 0.1f),
+                                color = primaryColor
+                            )) {
+                                append(currentLine.substring(i + 1, endIdx))
+                            }
+                            i = endIdx + 1
+                        } else {
+                            append("`")
+                            i += 1
+                        }
+                    }
+                    else -> {
+                        append(currentLine[i])
+                        i++
+                    }
+                }
+            }
+            
+            if (isQuote) {
+                addStyle(
+                    style = SpanStyle(
+                        fontStyle = FontStyle.Italic,
+                        color = primaryColor.copy(alpha = 0.8f)
+                    ),
+                    start = startLength,
+                    end = length
+                )
+            }
+            
+            if (lineIndex < lines.size - 1) {
+                append("\n")
+            }
+        }
+    }
 }

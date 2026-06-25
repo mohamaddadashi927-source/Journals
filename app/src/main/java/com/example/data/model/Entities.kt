@@ -16,7 +16,9 @@ data class Trade(
     val reason: String,
     val imagePath: String?, // local file path or content URI
     val tags: String, // Comma-separated list of tags
-    val postTradeNotes: String = "" // Notes added after trade is closed
+    val postTradeNotes: String = "", // Notes added after trade is closed
+    val richNotes: String = "", // Detailed rich notes and entry reasons
+    val emotionalState: String = "" // Emotional state during the trade (e.g. CALM, ANXIOUS, etc.)
 ) {
     val pnl: Double?
         get() = if (exitPrice != null) {

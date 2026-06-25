@@ -22,6 +22,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -272,15 +278,64 @@ fun TradeDetailScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("دلایل ورود به معامله", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "دلایل ورود و جزئیات ترید",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                
+                                // Beautiful Emotional State pill
+                                if (trade.emotionalState.isNotEmpty()) {
+                                    val (emoji, label, color) = when (trade.emotionalState) {
+                                        "CALM" -> Triple("🟢", "آرام", EmeraldGreen)
+                                        "CONFIDENT" -> Triple("🔵", "مطمئن", MaterialTheme.colorScheme.primary)
+                                        "EXCITED" -> Triple("🟡", "هیجان‌زده", Color(0xFFFFB300))
+                                        "ANXIOUS" -> Triple("🟠", "مضطرب", Color(0xFFFF6D00))
+                                        "GREEDY" -> Triple("🔴", "حریص", CrimsonRed)
+                                        "FEARFUL" -> Triple("🟣", "ترسیده", Color(0xFF9C27B0))
+                                        else -> Triple("🧠", trade.emotionalState, MaterialTheme.colorScheme.secondary)
+                                    }
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                                            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "حالت روحی: $emoji $label",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = color
+                                        )
+                                    }
+                                }
+                            }
+                            
                             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
-                            Text(
-                                text = trade.reason.ifEmpty { "یادداشتی برای ورود ثبت نشده است." },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 20.sp
-                            )
+                            
+                            val displayNotes = if (trade.richNotes.isNotEmpty()) trade.richNotes else trade.reason
+                            if (displayNotes.isNotEmpty()) {
+                                Text(
+                                    text = parseMarkdownToAnnotatedString(displayNotes, MaterialTheme.colorScheme.primary),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 22.sp
+                                )
+                            } else {
+                                Text(
+                                    text = "یادداشتی برای ورود ثبت نشده است.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    lineHeight = 20.sp
+                                )
+                            }
                         }
                     }
 
@@ -603,5 +658,96 @@ fun DetailRow(
             color = valueColor,
             textAlign = TextAlign.Left
         )
+    }
+}
+
+fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
+    return buildAnnotatedString {
+        val lines = text.split("\n")
+        lines.forEachIndexed { lineIndex, line ->
+            var currentLine = line
+            var isBullet = false
+            var isQuote = false
+            
+            if (currentLine.startsWith("- ")) {
+                isBullet = true
+                currentLine = currentLine.substring(2)
+            } else if (currentLine.startsWith("> ")) {
+                isQuote = true
+                currentLine = currentLine.substring(2)
+            }
+            
+            if (isBullet) {
+                append("• ")
+            }
+            
+            val startLength = length
+            
+            // Basic parser for Bold (**) and Italic (*) and Code (`)
+            var i = 0
+            while (i < currentLine.length) {
+                when {
+                    currentLine.startsWith("**", i) -> {
+                        val endIdx = currentLine.indexOf("**", i + 2)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(currentLine.substring(i + 2, endIdx))
+                            }
+                            i = endIdx + 2
+                        } else {
+                            append("**")
+                            i += 2
+                        }
+                    }
+                    currentLine.startsWith("*", i) -> {
+                        val endIdx = currentLine.indexOf("*", i + 1)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                                append(currentLine.substring(i + 1, endIdx))
+                            }
+                            i = endIdx + 1
+                        } else {
+                            append("*")
+                            i += 1
+                        }
+                    }
+                    currentLine.startsWith("`", i) -> {
+                        val endIdx = currentLine.indexOf("`", i + 1)
+                        if (endIdx != -1) {
+                            withStyle(SpanStyle(
+                                fontFamily = FontFamily.Monospace,
+                                background = primaryColor.copy(alpha = 0.1f),
+                                color = primaryColor
+                            )) {
+                                append(currentLine.substring(i + 1, endIdx))
+                            }
+                            i = endIdx + 1
+                        } else {
+                            append("`")
+                            i += 1
+                        }
+                    }
+                    else -> {
+                        append(currentLine[i])
+                        i++
+                    }
+                }
+            }
+            
+            if (isQuote) {
+                addStyle(
+                    style = SpanStyle(
+                        fontStyle = FontStyle.Italic,
+                        color = primaryColor.copy(alpha = 0.8f)
+                    ),
+                    start = startLength,
+                    end = length
+                )
+            }
+            
+            if (lineIndex < lines.size - 1) {
+                append("\n")
+            }
+        }
     }
 }

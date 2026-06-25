@@ -286,6 +286,8 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
                     put("imagePath", t.imagePath ?: JSONObject.NULL)
                     put("tags", t.tags)
                     put("postTradeNotes", t.postTradeNotes)
+                    put("richNotes", t.richNotes)
+                    put("emotionalState", t.emotionalState)
                 }
                 tradesArr.put(o)
             }
@@ -375,7 +377,9 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
                         reason = o.getString("reason"),
                         imagePath = imageVal,
                         tags = o.getString("tags"),
-                        postTradeNotes = o.optString("postTradeNotes", "")
+                        postTradeNotes = o.optString("postTradeNotes", ""),
+                        richNotes = o.optString("richNotes", ""),
+                        emotionalState = o.optString("emotionalState", "")
                     )
                     repository.insertTrade(trade)
                 }
