@@ -39,6 +39,7 @@ import com.example.ui.viewmodel.JournalViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +91,25 @@ fun TradeDetailScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = {
+                            trade?.let { t ->
+                                coroutineScope.launch {
+                                    val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, t, currencySymbol)
+                                    if (pdfUri != null) {
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "application/pdf"
+                                            putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(intent, "اشتراک‌گذاری گزارش PDF"))
+                                    } else {
+                                        Toast.makeText(context, "خطا در ایجاد گزارش PDF", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "خروجی PDF", tint = MaterialTheme.colorScheme.primary)
+                        }
                         IconButton(onClick = { showDeleteConfirmDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "حذف معامله", tint = CrimsonRed)
                         }
@@ -423,6 +443,99 @@ fun TradeDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 20.sp
                             )
+                        }
+                    }
+
+                    // PDF Export & Print Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(24.dp)
+                            ),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                                RoundedCornerShape(12.dp)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Share,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            "خروجی PDF و چاپ گزارش",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            "دریافت فایل فرمت شده آماده اشتراک‌گذاری یا چاپ نمودار",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, trade, currencySymbol)
+                                        if (pdfUri != null) {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                                type = "application/pdf"
+                                                putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
+                                                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            }
+                                            context.startActivity(android.content.Intent.createChooser(intent, "اشتراک‌گذاری و چاپ گزارش معامله"))
+                                        } else {
+                                            Toast.makeText(context, "خطا در تولید فایل PDF", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Default.Share,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("تولید PDF و اشتراک‌گذاری / چاپ گزارش", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
 
