@@ -10,7 +10,6 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.api.GeminiClient
 import com.example.data.local.AppDatabase
 import com.example.data.model.Market
 import com.example.data.model.Tag
@@ -33,20 +32,6 @@ enum class SortType {
     DATE_DESC, DATE_ASC, PNL_DESC, PNL_ASC
 }
 
-sealed interface AIState {
-    object Idle : AIState
-    object Loading : AIState
-    data class Success(val result: String) : AIState
-    data class Error(val message: String) : AIState
-}
-
-sealed interface AIImageState {
-    object Idle : AIImageState
-    object Loading : AIImageState
-    data class Success(val bitmap: Bitmap) : AIImageState
-    data class Error(val message: String) : AIImageState
-}
-
 class JournalViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application, viewModelScope)
@@ -66,11 +51,6 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     // Settings States
     val currency = MutableStateFlow(sharedPrefs.getString("currency", "USD") ?: "USD") // USD, IRT (تومان), USDT
     val themeMode = MutableStateFlow(sharedPrefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM") // SYSTEM, LIGHT, DARK
-
-    // AI States
-    val chartAnalysisState = MutableStateFlow<AIState>(AIState.Idle)
-    val voiceTranscriptionState = MutableStateFlow<AIState>(AIState.Idle)
-    val chartMockupState = MutableStateFlow<AIImageState>(AIImageState.Idle)
 
     // Data Sources
     val allMarkets: StateFlow<List<Market>> = repository.allMarkets
@@ -275,78 +255,6 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             Log.e("JournalViewModel", "Failed to save image locally", e)
             null
         }
-    }
-
-    // AI Features
-
-    // 1. Chart Image Analysis
-    fun analyzeChartImage(imagePath: String, prompt: String = "تحلیل تکنیکال این نمودار را ارائه دهید. نقاط حمایت و مقاومت، الگوها و نقاط ضعف یا قوت ورود را به زبان فارسی بررسی کنید.") {
-        chartAnalysisState.value = AIState.Loading
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val file = File(imagePath)
-                if (!file.exists()) {
-                    chartAnalysisState.value = AIState.Error("فایل تصویر یافت نشد.")
-                    return@launch
-                }
-                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                if (bitmap == null) {
-                    chartAnalysisState.value = AIState.Error("خطا در بارگذاری تصویر.")
-                    return@launch
-                }
-                val result = GeminiClient.analyzeChart(bitmap, prompt)
-                chartAnalysisState.value = AIState.Success(result)
-            } catch (e: Exception) {
-                chartAnalysisState.value = AIState.Error("خطا در تحلیل تصویر: ${e.localizedMessage}")
-            }
-        }
-    }
-
-    fun resetChartAnalysisState() {
-        chartAnalysisState.value = AIState.Idle
-    }
-
-    // 2. Audio Transcription
-    fun transcribeVoiceNote(audioBytes: ByteArray, prompt: String = "این فایل صوتی مربوط به یادداشت‌های یک تریدر است. لطفاً آن را دقیقاً به زبان فارسی بازنویسی (تایپ) کنید.") {
-        voiceTranscriptionState.value = AIState.Loading
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val result = GeminiClient.transcribeAudio(audioBytes, prompt)
-                voiceTranscriptionState.value = AIState.Success(result)
-            } catch (e: Exception) {
-                voiceTranscriptionState.value = AIState.Error("خطا در تحلیل صدا: ${e.localizedMessage}")
-            }
-        }
-    }
-
-    fun resetVoiceTranscriptionState() {
-        voiceTranscriptionState.value = AIState.Idle
-    }
-
-    // 3. AI Template Image Generation
-    fun generateChartMockupImage(prompt: String, aspectRatio: String = "16:9") {
-        chartMockupState.value = AIImageState.Loading
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Map ratios to what Gemini expects
-                val apiRatio = when (aspectRatio) {
-                    "1:1", "2:3", "3:2", "3:4", "4:3", "9:16", "16:9", "21:9" -> aspectRatio
-                    else -> "16:9"
-                }
-                val bitmap = GeminiClient.generateChartMockup(prompt, apiRatio)
-                if (bitmap != null) {
-                    chartMockupState.value = AIImageState.Success(bitmap)
-                } else {
-                    chartMockupState.value = AIImageState.Error("خطا در ساخت تصویر توسط هوش مصنوعی. لطفاً دوباره تلاش کنید.")
-                }
-            } catch (e: Exception) {
-                chartMockupState.value = AIImageState.Error("خطا: ${e.localizedMessage}")
-            }
-        }
-    }
-
-    fun resetChartMockupState() {
-        chartMockupState.value = AIImageState.Idle
     }
 
     // Backup & Restore & Export Functions

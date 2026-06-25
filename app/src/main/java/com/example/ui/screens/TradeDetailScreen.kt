@@ -34,7 +34,6 @@ import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.OpenBlue
 import com.example.ui.theme.OrangeWarn
-import com.example.ui.viewmodel.AIState
 import com.example.ui.viewmodel.JournalViewModel
 import java.io.File
 import java.text.SimpleDateFormat
@@ -69,8 +68,6 @@ fun TradeDetailScreen(
     var showZoomImageDialog by remember { mutableStateOf(false) }
 
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
-
-    val chartAnalysis by viewModel.chartAnalysisState.collectAsState()
 
     // Initialize inputs when trade is loaded
     LaunchedEffect(trade) {
@@ -317,95 +314,6 @@ fun TradeDetailScreen(
                                         Icon(Icons.Default.ZoomIn, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("مشاهده بزرگ‌تر", color = Color.White, fontSize = 10.sp)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // AI Analysis Module
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(24.dp)
-                                    ),
-                                shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                            Text("تحلیل تکنیکال چارت با Gemini-3.1-Pro", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
-                                        }
-
-                                        if (chartAnalysis is AIState.Idle) {
-                                            Button(
-                                                onClick = { viewModel.analyzeChartImage(trade.imagePath) },
-                                                shape = RoundedCornerShape(8.dp),
-                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                                modifier = Modifier.height(32.dp)
-                                            ) {
-                                                Text("شروع تحلیل هوشمند", fontSize = 10.sp)
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    when (chartAnalysis) {
-                                        is AIState.Idle -> {
-                                            Text(
-                                                "نمودار چسبانده شده را با فشردن دکمه بالا آنالیز کنید تا جمینی به صورت حرفه‌ای خطوط حمایت، کانال‌ها، الگوها و ریسک ورود را گزارش دهد.",
-                                                fontSize = 11.sp,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                            )
-                                        }
-                                        is AIState.Loading -> {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                                                Spacer(modifier = Modifier.width(10.dp))
-                                                Text("جمینی در حال بررسی دقیق الگوها و نقاط ورود چارت...", fontSize = 11.sp)
-                                            }
-                                        }
-                                        is AIState.Success -> {
-                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(
-                                                    text = (chartAnalysis as AIState.Success).result,
-                                                    fontSize = 12.sp,
-                                                    lineHeight = 22.sp,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                
-                                                TextButton(
-                                                    onClick = { viewModel.resetChartAnalysisState() },
-                                                    modifier = Modifier.align(Alignment.End)
-                                                ) {
-                                                    Text("بازنشانی تحلیل", fontSize = 11.sp)
-                                                }
-                                            }
-                                        }
-                                        is AIState.Error -> {
-                                            Text(
-                                                text = (chartAnalysis as AIState.Error).message,
-                                                color = CrimsonRed,
-                                                fontSize = 11.sp
-                                            )
-                                        }
                                     }
                                 }
                             }

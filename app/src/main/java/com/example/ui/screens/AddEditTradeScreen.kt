@@ -48,8 +48,6 @@ import coil.compose.AsyncImage
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
-import com.example.ui.viewmodel.AIImageState
-import com.example.ui.viewmodel.AIState
 import com.example.ui.viewmodel.JournalViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,10 +89,6 @@ fun AddEditTradeScreen(
     var newMarketInput by remember { mutableStateOf("") }
     var showNewTagDialog by remember { mutableStateOf(false) }
     var newTagInput by remember { mutableStateOf("") }
-
-    // AI dialogs
-    var showVoiceDialog by remember { mutableStateOf(false) }
-    var showAiGenDialog by remember { mutableStateOf(false) }
 
     // Date/Time Formatter
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
@@ -444,30 +438,13 @@ fun AddEditTradeScreen(
 
                 // 6. Reason and AI Voice Transcription
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "دلیل ورود به معامله (یادداشت)",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        
-                        // AI Voice Journaling Action Button
-                        TextButton(
-                            onClick = { showVoiceDialog = true },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("یادداشت صوتی هوشمند")
-                            }
-                        }
-                    }
+                    Text(
+                        "دلیل ورود به معامله (یادداشت)",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
 
                     OutlinedTextField(
                         value = reasonText,
@@ -525,29 +502,13 @@ fun AddEditTradeScreen(
 
                 // 8. Attached Image Container & Actions
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "تصویر نمودار (چارت)",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        
-                        // AI Image Mockup Generation Action Button
-                        TextButton(onClick = { showAiGenDialog = true }) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("شبیه‌سازی چارت با هوش مصنوعی")
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "تصویر نمودار (چارت)",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
 
                     if (imagePathState != null) {
                         Box(
@@ -759,334 +720,6 @@ fun AddEditTradeScreen(
                     }
                 }
             )
-        }
-
-        // AI Voice Transcription Dialog (Continuous Soundwave Simulator and real mic caller)
-        if (showVoiceDialog) {
-            val transcriptionState by viewModel.voiceTranscriptionState.collectAsState()
-            var isRecording by remember { mutableStateOf(false) }
-            var simulationActivated by remember { mutableStateOf(false) }
-
-            Dialog(onDismissRequest = {
-                viewModel.resetVoiceTranscriptionState()
-                showVoiceDialog = false
-            }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(24.dp)
-                        ),
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text("ضبط یادداشت صوتی هوشمند", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        
-                        Text(
-                            "برای ضبط دلایل ورود خود صحبت کنید. سیستم صدا را ضبط کرده و با هوش مصنوعی جمینی به متن تبدیل می‌کند.",
-                            fontSize = 11.sp,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        // Animation Soundwave or Status Icon
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(
-                                    if (isRecording) EmeraldGreen.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant,
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isRecording) {
-                                Icon(
-                                    Icons.Default.Mic,
-                                    contentDescription = "درحال ضبط",
-                                    tint = EmeraldGreen,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                            } else {
-                                Icon(
-                                    Icons.Default.MicNone,
-                                    contentDescription = "خاموش",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                            }
-                        }
-
-                        // Status of AI transcription
-                        when (transcriptionState) {
-                            is AIState.Idle -> {
-                                Text(
-                                    if (isRecording) "درحال ضبط صدا... دکمه توقف را بزنید." else "آماده برای ضبط یادداشت",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            }
-                            is AIState.Loading -> {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("درحال تبدیل صدا به متن با Gemini-3.5-Flash...", fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                }
-                            }
-                            is AIState.Success -> {
-                                val text = (transcriptionState as AIState.Success).result
-                                OutlinedTextField(
-                                    value = text,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("متن تبدیل شده") },
-                                    modifier = Modifier.fillMaxWidth().height(100.dp),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                Button(
-                                    onClick = {
-                                        reasonText = if (reasonText.isEmpty()) text else "$reasonText\n$text"
-                                        viewModel.resetVoiceTranscriptionState()
-                                        showVoiceDialog = false
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("تایید و انتقال به دلیل معامله")
-                                }
-                            }
-                            is AIState.Error -> {
-                                Text(
-                                    text = (transcriptionState as AIState.Error).message,
-                                    color = CrimsonRed,
-                                    fontSize = 11.sp,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-
-                        // Action Buttons inside Record dialog
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            if (!isRecording && transcriptionState is AIState.Idle) {
-                                Button(
-                                    onClick = {
-                                        // Start real recording or simulation
-                                        isRecording = true
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("شروع ضبط")
-                                }
-
-                                // Simulator button (extremely useful for testability)
-                                OutlinedButton(
-                                    onClick = {
-                                        // Simulate a voice byte input and directly send to Gemini
-                                        coroutineScope.launch {
-                                            isRecording = false
-                                            simulationActivated = true
-                                            val dummyWav = ByteArray(1024) // Dummy PCM Wav
-                                            viewModel.transcribeVoiceNote(
-                                                dummyWav,
-                                                "Simulate beautiful Persian text: 'وارد معامله خرید طلا شدم زیرا قیمت به خط حمایت قوی واکنش نشان داد و الگوی کندل پوشای صعودی شکل گرفت.'"
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("شبیه‌ساز هوشمند")
-                                }
-                            } else if (isRecording) {
-                                Button(
-                                    onClick = {
-                                        // Stop and process
-                                        isRecording = false
-                                        // Send dummy/or captured audio bytes
-                                        val mockAudio = ByteArray(512)
-                                        viewModel.transcribeVoiceNote(mockAudio)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonRed),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("توقف ضبط")
-                                }
-                            }
-                        }
-
-                        TextButton(onClick = {
-                            viewModel.resetVoiceTranscriptionState()
-                            showVoiceDialog = false
-                        }) {
-                            Text("بستن")
-                        }
-                    }
-                }
-            }
-        }
-
-        // AI Mockup Chart Image Generation Dialog
-        if (showAiGenDialog) {
-            val mockupState by viewModel.chartMockupState.collectAsState()
-            var mockupPromptInput by remember { mutableStateOf("یک نمودار شمعی تکنیکال که یک الگوی کف دوقلو را نشان می‌دهد") }
-            var selectedRatio by remember { mutableStateOf("16:9") }
-
-            val aspectRatios = listOf("1:1", "4:3", "3:4", "16:9", "9:16", "21:9")
-
-            Dialog(onDismissRequest = {
-                viewModel.resetChartMockupState()
-                showAiGenDialog = false
-            }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(24.dp)
-                        ),
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text("ساخت چارت چشمی با هوش مصنوعی", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-
-                        Text(
-                            "شما می‌توانید با استفاده از هوش مصنوعی تصویر یک چارت تکنیکال یا قالب تحلیل را شبیه‌سازی کنید.",
-                            fontSize = 11.sp,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        OutlinedTextField(
-                            value = mockupPromptInput,
-                            onValueChange = { mockupPromptInput = it },
-                            label = { Text("توصیف نمودار") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-
-                        // Aspect Ratio dropdown/selection
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text("انتخاب ابعاد تصویر (Aspect Ratio):", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                aspectRatios.forEach { ratio ->
-                                    val isSelected = selectedRatio == ratio
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { selectedRatio = ratio },
-                                        label = { Text(ratio, fontSize = 10.sp) },
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        // State handling
-                        when (mockupState) {
-                            is AIImageState.Idle -> {
-                                Button(
-                                    onClick = {
-                                        viewModel.generateChartMockupImage(mockupPromptInput, selectedRatio)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("تولید چارت شبیه‌ساز")
-                                }
-                            }
-                            is AIImageState.Loading -> {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    CircularProgressIndicator()
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("در حال تولید تصویر با Gemini-3.1-Flash-Image...", fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                }
-                            }
-                            is AIImageState.Success -> {
-                                val generatedBitmap = (mockupState as AIImageState.Success).bitmap
-                                Image(
-                                    bitmap = generatedBitmap,
-                                    contentDescription = "تصویر تولید شده",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(140.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-
-                                Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            val path = viewModel.saveImageToLocal(generatedBitmap)
-                                            if (path != null) {
-                                                imagePathState = path
-                                                viewModel.resetChartMockupState()
-                                                showAiGenDialog = false
-                                                Toast.makeText(context, "تصویر با موفقیت ضمیمه شد", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("ضمیمه کردن به معامله")
-                                }
-                            }
-                            is AIImageState.Error -> {
-                                Text(
-                                    text = (mockupState as AIImageState.Error).message,
-                                    color = CrimsonRed,
-                                    fontSize = 11.sp,
-                                    textAlign = TextAlign.Center
-                                )
-                                Button(
-                                    onClick = { viewModel.generateChartMockupImage(mockupPromptInput, selectedRatio) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("تلاش مجدد")
-                                }
-                            }
-                        }
-
-                        TextButton(onClick = {
-                            viewModel.resetChartMockupState()
-                            showAiGenDialog = false
-                        }) {
-                            Text("بستن")
-                        }
-                    }
-                }
-            }
         }
     }
 }
