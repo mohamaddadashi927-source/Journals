@@ -45,6 +45,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
+import com.example.ui.util.Loc
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +67,7 @@ fun TradeDetailScreen(
         "USDT" -> "USDT"
         else -> "$"
     }
+    val language by viewModel.language.collectAsState()
 
     var showPostTradeDialog by remember { mutableStateOf(false) }
     var postNotesInput by remember { mutableStateOf("") }
@@ -82,15 +84,17 @@ fun TradeDetailScreen(
         }
     }
 
-    // Force RTL
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    // Dynamic Layout Direction based on selected language
+    val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
+
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("جزئیات معامله", fontWeight = FontWeight.Bold) },
+                    title = { Text(Loc.tr("trade_details", language), fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "بازگشت")
+                            Icon(Icons.Default.ArrowBack, contentDescription = Loc.tr("back", language))
                         }
                     },
                     actions = {
@@ -661,7 +665,7 @@ fun DetailRow(
     }
 }
 
-fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
+private fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
     return buildAnnotatedString {
         val lines = text.split("\n")
         lines.forEachIndexed { lineIndex, line ->

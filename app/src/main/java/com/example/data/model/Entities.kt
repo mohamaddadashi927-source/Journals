@@ -18,16 +18,12 @@ data class Trade(
     val tags: String, // Comma-separated list of tags
     val postTradeNotes: String = "", // Notes added after trade is closed
     val richNotes: String = "", // Detailed rich notes and entry reasons
-    val emotionalState: String = "" // Emotional state during the trade (e.g. CALM, ANXIOUS, etc.)
+    val emotionalState: String = "", // Emotional state during the trade (e.g. CALM, ANXIOUS, etc.)
+    val customPnl: Double? = null // Manually registered profit/loss
 ) {
     val pnl: Double?
         get() = if (exitPrice != null) {
-            val rawPnl = if (side == "BUY") {
-                (exitPrice - entryPrice) * volume
-            } else {
-                (entryPrice - exitPrice) * volume
-            }
-            rawPnl - fees
+            customPnl ?: 0.0
         } else {
             null
         }
@@ -35,7 +31,7 @@ data class Trade(
     val status: String
         get() = when {
             exitPrice == null -> "OPEN"
-            (pnl ?: 0.0) > 0.0 -> "WIN"
+            (pnl ?: 0.0) >= 0.0 -> "WIN"
             else -> "LOSS"
         }
 }

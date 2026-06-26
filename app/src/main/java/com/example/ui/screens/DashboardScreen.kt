@@ -28,12 +28,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
 import com.example.data.model.Trade
 import com.example.ui.components.EquityCurveChart
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.OpenBlue
+import com.example.ui.util.Loc
 import com.example.ui.viewmodel.JournalViewModel
 import com.example.ui.viewmodel.TradeStats
 import java.io.File
@@ -52,6 +55,10 @@ fun DashboardScreen(
     val trades by viewModel.trades.collectAsState()
     val stats by viewModel.statistics.collectAsState()
     val currency by viewModel.currency.collectAsState()
+    val language by viewModel.language.collectAsState()
+    val initialBalance by viewModel.initialBalance.collectAsState()
+    val accountName by viewModel.accountName.collectAsState()
+    val isAccountInitialized by viewModel.isAccountInitialized.collectAsState()
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -64,21 +71,89 @@ fun DashboardScreen(
         trades.take(5)
     }
 
-    // Force RTL for Persian typography layout alignment
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    // Dynamic Layout Direction based on selected language
+    val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
+
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        // Initial Account Configuration Dialog
+        if (!isAccountInitialized) {
+            var tempName by remember { mutableStateOf("") }
+            var tempBalanceStr by remember { mutableStateOf("") }
+            var tempCurrency by remember { mutableStateOf("USD") }
+
+            AlertDialog(
+                onDismissRequest = {}, // Cannot dismiss until initialized
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val bal = tempBalanceStr.toDoubleOrNull() ?: 10000.0
+                            val name = tempName.ifEmpty {
+                                if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account"
+                            }
+                            viewModel.initializeAccount(name, bal)
+                            viewModel.setCurrency(tempCurrency)
+                        },
+                        enabled = tempBalanceStr.isNotEmpty() && (tempBalanceStr.toDoubleOrNull() ?: 0.0) >= 0.0
+                    ) {
+                        Text(Loc.tr("start", language))
+                    }
+                },
+                title = {
+                    Text(Loc.tr("initial_balance_title", language), fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(Loc.tr("initial_balance_desc", language), fontSize = 13.sp)
+
+                        OutlinedTextField(
+                            value = tempName,
+                            onValueChange = { tempName = it },
+                            label = { Text(Loc.tr("account_name", language)) },
+                            placeholder = { Text(if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = tempBalanceStr,
+                            onValueChange = { tempBalanceStr = it },
+                            label = { Text(Loc.tr("initial_balance", language)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("10000") }
+                        )
+
+                        Text(Loc.tr("currency", language), style = MaterialTheme.typography.labelMedium)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            listOf("USD" to "$", "IRT" to "تومان", "USDT" to "USDT").forEach { (code, sym) ->
+                                val isSel = tempCurrency == code
+                                FilterChip(
+                                    selected = isSel,
+                                    onClick = { tempCurrency = code },
+                                    label = { Text("$code ($sym)", fontSize = 11.sp) }
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "داشبورد معاملاتی",
+                            text = if (isAccountInitialized) accountName else Loc.tr("dashboard_title", language),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
                     },
                     actions = {
                         IconButton(onClick = onNavigateToSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = "تنظیمات")
+                            Icon(Icons.Default.Settings, contentDescription = Loc.tr("settings_title", language))
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -94,7 +169,7 @@ fun DashboardScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "ثبت معامله جدید")
+                    Icon(Icons.Default.Add, contentDescription = Loc.tr("add_trade", language))
                 }
             }
         ) { paddingValues ->
@@ -108,7 +183,12 @@ fun DashboardScreen(
             ) {
                 // Key Portfolio Stat Highlights
                 item {
-                    PortfolioSummaryCard(stats = stats, currencySymbol = currencySymbol)
+                    PortfolioSummaryCard(
+                        stats = stats,
+                        currencySymbol = currencySymbol,
+                        initialBalance = initialBalance,
+                        lang = language
+                    )
                 }
 
                 // Equity Curve
@@ -116,6 +196,8 @@ fun DashboardScreen(
                     EquityCurveChart(
                         trades = trades,
                         currencySymbol = currencySymbol,
+                        initialBalance = initialBalance,
+                        lang = language,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(260.dp)
@@ -129,14 +211,14 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         StatSmallCard(
-                            title = "بیشترین سود",
-                            value = "${String.format(Locale.US, "%,.1f", stats.maxProfit)} $currencySymbol",
+                            title = if (language == "fa") "بیشترین سود" else if (language == "ar") "أقصى ربح" else "Max Profit",
+                            value = "${if (stats.maxProfit >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", stats.maxProfit)} $currencySymbol",
                             icon = Icons.Default.TrendingUp,
                             color = EmeraldGreen,
                             modifier = Modifier.weight(1f)
                         )
                         StatSmallCard(
-                            title = "بیشترین ضرر",
+                            title = if (language == "fa") "بیشترین ضرر" else if (language == "ar") "أقصى خسارة" else "Max Loss",
                             value = "${String.format(Locale.US, "%,.1f", stats.maxLoss)} $currencySymbol",
                             icon = Icons.Default.TrendingDown,
                             color = CrimsonRed,
@@ -153,14 +235,14 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "آخرین معاملات",
+                            text = if (language == "fa") "آخرین معاملات" else if (language == "ar") "آخر صفقات" else "Latest Trades",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         TextButton(onClick = onNavigateToTradeList) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("مشاهده همه")
+                                Text(if (language == "fa") "مشاهده همه" else if (language == "ar") "عرض الكل" else "View All")
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     Icons.AutoMirrored.Filled.TrendingFlat,
@@ -182,7 +264,7 @@ fun DashboardScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                "هیچ معامله‌ای ثبت نشده است.",
+                                text = if (language == "fa") "هیچ معامله‌ای ثبت نشده است." else if (language == "ar") "لم يتم تسجيل أي صفقة بعد." else "No trades registered yet.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
@@ -193,6 +275,7 @@ fun DashboardScreen(
                         TradeItemRow(
                             trade = trade,
                             currencySymbol = currencySymbol,
+                            lang = language,
                             onClick = { onNavigateToTradeDetail(trade.id) }
                         )
                     }
@@ -207,9 +290,15 @@ fun DashboardScreen(
 }
 
 @Composable
-fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
+fun PortfolioSummaryCard(
+    stats: TradeStats,
+    currencySymbol: String,
+    initialBalance: Double,
+    lang: String
+) {
+    val currentBalance = initialBalance + stats.totalPnL
     val isProfit = stats.totalPnL >= 0.0
-    val trendColor = if (isProfit) EmeraldGreen else CrimsonRed
+    val pnlColor = if (isProfit) EmeraldGreen else CrimsonRed
 
     Card(
         modifier = Modifier
@@ -232,7 +321,7 @@ fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "سود و زیان کل حساب",
+                text = Loc.tr("current_balance", lang),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                 fontWeight = FontWeight.Bold
@@ -241,10 +330,10 @@ fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "${if (isProfit) "+" else ""}${String.format(Locale.US, "%,.2f", stats.totalPnL)} $currencySymbol",
+                text = "${String.format(Locale.US, "%,.2f", currentBalance)} $currencySymbol",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
-                color = trendColor,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 textAlign = TextAlign.Center
             )
 
@@ -256,10 +345,27 @@ fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
+                // Total PnL (Next to win rate and trades!)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = if (lang == "fa") "سود/زیان کل" else if (lang == "ar") "إجمالي الربح/الخسارة" else "Total P&L",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${if (isProfit) "+" else ""}${String.format(Locale.US, "%,.1f", stats.totalPnL)} $currencySymbol",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = pnlColor
+                    )
+                }
+
                 // Win Rate
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "نرخ برد (Win Rate)",
+                        text = Loc.tr("winrate", lang),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
@@ -276,7 +382,7 @@ fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
                 // Total Trades
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "کل معاملات",
+                        text = Loc.tr("total_trades", lang),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
@@ -290,10 +396,10 @@ fun PortfolioSummaryCard(stats: TradeStats, currencySymbol: String) {
                     )
                 }
 
-                // Closed Trades / Open
+                // Open Trades
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "معاملات باز",
+                        text = Loc.tr("open_trades", lang),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
@@ -367,9 +473,10 @@ fun StatSmallCard(
 fun TradeItemRow(
     trade: Trade,
     currencySymbol: String,
+    lang: String = "fa",
     onClick: () -> Unit
 ) {
-    val isProfit = (trade.pnl ?: 0.0) > 0.0
+    val isProfit = (trade.pnl ?: 0.0) >= 0.0
     val isClosed = trade.exitPrice != null
     val trendColor = when {
         !isClosed -> OpenBlue
@@ -378,9 +485,9 @@ fun TradeItemRow(
     }
 
     val statusText = when {
-        !isClosed -> "باز"
-        isProfit -> "برد"
-        else -> "باخت"
+        !isClosed -> if (lang == "en") "Open" else if (lang == "ar") "مفتوحة" else "باز"
+        isProfit -> if (lang == "en") "Win" else if (lang == "ar") "ربح" else "برد"
+        else -> if (lang == "en") "Loss" else if (lang == "ar") "خسارة" else "باخت"
     }
 
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }

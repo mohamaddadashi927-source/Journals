@@ -51,6 +51,10 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     // Settings States
     val currency = MutableStateFlow(sharedPrefs.getString("currency", "USD") ?: "USD") // USD, IRT (تومان), USDT
     val themeMode = MutableStateFlow(sharedPrefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM") // SYSTEM, LIGHT, DARK
+    val language = MutableStateFlow(sharedPrefs.getString("language", "fa") ?: "fa") // fa, en, ar
+    val initialBalance = MutableStateFlow(sharedPrefs.getFloat("initial_balance", 10000f).toDouble())
+    val accountName = MutableStateFlow(sharedPrefs.getString("account_name", "حساب شخصی") ?: "حساب شخصی")
+    val isAccountInitialized = MutableStateFlow(sharedPrefs.getBoolean("is_account_initialized", false))
 
     // Data Sources
     val allMarkets: StateFlow<List<Market>> = repository.allMarkets
@@ -178,6 +182,22 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         sharedPrefs.edit().putString("theme_mode", newTheme).apply()
     }
 
+    fun setLanguage(newLanguage: String) {
+        language.value = newLanguage
+        sharedPrefs.edit().putString("language", newLanguage).apply()
+    }
+
+    fun initializeAccount(name: String, balance: Double) {
+        accountName.value = name
+        initialBalance.value = balance
+        isAccountInitialized.value = true
+        sharedPrefs.edit()
+            .putString("account_name", name)
+            .putFloat("initial_balance", balance.toFloat())
+            .putBoolean("is_account_initialized", true)
+            .apply()
+    }
+
     // Trade DB Operations
     fun getTradeById(id: Int): Flow<Trade?> = repository.getTradeById(id)
 
@@ -202,6 +222,14 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     fun resetAllData() {
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteAllTrades()
+            sharedPrefs.edit()
+                .remove("account_name")
+                .remove("initial_balance")
+                .remove("is_account_initialized")
+                .apply()
+            accountName.value = "حساب شخصی"
+            initialBalance.value = 10000.0
+            isAccountInitialized.value = false
         }
     }
 

@@ -84,6 +84,8 @@ fun AddEditTradeScreen(
     var volumeStr by remember { mutableStateOf("") }
     var entryPriceStr by remember { mutableStateOf("") }
     var exitPriceStr by remember { mutableStateOf("") }
+    var customPnlStr by remember { mutableStateOf("") }
+    var isProfitMode by remember { mutableStateOf(true) }
     var dateTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var feesStr by remember { mutableStateOf("") }
     var reasonText by remember { mutableStateOf("") }
@@ -113,6 +115,16 @@ fun AddEditTradeScreen(
                     volumeStr = trade.volume.toString()
                     entryPriceStr = trade.entryPrice.toString()
                     exitPriceStr = trade.exitPrice?.toString() ?: ""
+                    
+                    val cpnl = trade.customPnl
+                    if (cpnl != null) {
+                        isProfitMode = cpnl >= 0.0
+                        customPnlStr = Math.abs(cpnl).toString()
+                    } else {
+                        isProfitMode = true
+                        customPnlStr = ""
+                    }
+
                     dateTime = trade.dateTime
                     feesStr = trade.fees.toString()
                     reasonText = trade.reason
@@ -355,46 +367,82 @@ fun AddEditTradeScreen(
                     )
                 }
 
-                // PnL Auto-calculated preview banner
+                // Manual PnL Entry Section (Visible when exitPriceStr is not empty)
                 AnimatedVisibility(
-                    visible = calculatedPnlPreview != null,
+                    visible = exitPriceStr.trim().isNotEmpty(),
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    calculatedPnlPreview?.let { pnl ->
-                        val isProfit = pnl >= 0.0
-                        val color = if (isProfit) EmeraldGreen else CrimsonRed
-                        Card(
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(16.dp)
+                            ),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(
-                                    width = 1.dp,
-                                    color = color.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(20.dp)
-                                ),
-                            colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.08f)),
-                            shape = RoundedCornerShape(20.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            Text(
+                                text = "ثبت دستی سود یا زیان معامله",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "محاسبه خودکار سود/زیان معامله:",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                // Manual PnL Input Field
+                                OutlinedTextField(
+                                    value = customPnlStr,
+                                    onValueChange = { customPnlStr = it },
+                                    label = { Text("میزان سود/زیان معامله") },
+                                    placeholder = { Text("مثلا 150.0") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
-                                Text(
-                                    text = "${if (isProfit) "+" else ""}${String.format(Locale.US, "%,.2f", pnl)}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = color
-                                )
+
+                                // Profit/Loss Toggle Buttons
+                                Row(
+                                    modifier = Modifier.height(56.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Button(
+                                        onClick = { isProfitMode = true },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isProfitMode) EmeraldGreen else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                            contentColor = if (isProfitMode) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxHeight()
+                                    ) {
+                                        Text("سود (+)", fontWeight = FontWeight.Bold)
+                                    }
+
+                                    Button(
+                                        onClick = { isProfitMode = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (!isProfitMode) CrimsonRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                            contentColor = if (!isProfitMode) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxHeight()
+                                    ) {
+                                        Text("زیان (-)", fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
                         }
                     }
@@ -804,6 +852,13 @@ fun AddEditTradeScreen(
 
                             val tagsJoined = selectedTagsList.joinToString(",")
 
+                            val cpnl = if (exit != null) {
+                                val rawCpnl = customPnlStr.toDoubleOrNull() ?: 0.0
+                                if (isProfitMode) rawCpnl else -rawCpnl
+                            } else {
+                                null
+                            }
+
                             val trade = Trade(
                                 id = tradeId ?: 0,
                                 side = side,
@@ -818,7 +873,8 @@ fun AddEditTradeScreen(
                                 tags = tagsJoined,
                                 postTradeNotes = postNotesText,
                                 richNotes = richNotesValue.text,
-                                emotionalState = emotionalStateSelected
+                                emotionalState = emotionalStateSelected,
+                                customPnl = cpnl
                             )
 
                             if (tradeId == null) {
@@ -978,7 +1034,7 @@ fun Image(
     )
 }
 
-fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
+private fun parseMarkdownToAnnotatedString(text: String, primaryColor: Color): AnnotatedString {
     return buildAnnotatedString {
         val lines = text.split("\n")
         lines.forEachIndexed { lineIndex, line ->

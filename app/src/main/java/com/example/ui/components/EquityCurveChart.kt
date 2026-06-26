@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Trade
+import com.example.ui.util.Loc
 import java.util.Locale
 import kotlin.math.max
 
@@ -26,6 +27,8 @@ import kotlin.math.max
 fun EquityCurveChart(
     trades: List<Trade>,
     currencySymbol: String,
+    initialBalance: Double,
+    lang: String,
     modifier: Modifier = Modifier
 ) {
     // We filter closed trades and sort them chronologically (oldest to newest) to calculate cumulative equity
@@ -33,9 +36,9 @@ fun EquityCurveChart(
         trades.filter { it.exitPrice != null }.sortedBy { it.dateTime }
     }
 
-    val equityPoints = remember(closedTradesChronological) {
-        var currentEquity = 0.0
-        val points = mutableListOf(0.0) // Start at 0
+    val equityPoints = remember(closedTradesChronological, initialBalance) {
+        var currentEquity = initialBalance
+        val points = mutableListOf(initialBalance)
         for (trade in closedTradesChronological) {
             currentEquity += (trade.pnl ?: 0.0)
             points.add(currentEquity)
@@ -43,9 +46,9 @@ fun EquityCurveChart(
         points
     }
 
-    val minEquity = equityPoints.minOrNull() ?: 0.0
-    val maxEquity = equityPoints.maxOrNull() ?: 0.0
-    val totalPnL = equityPoints.lastOrNull() ?: 0.0
+    val minEquity = equityPoints.minOrNull() ?: initialBalance
+    val maxEquity = equityPoints.maxOrNull() ?: initialBalance
+    val totalPnL = closedTradesChronological.sumOf { it.pnl ?: 0.0 }
 
     // Animation progress
     var animatedProgress by remember { mutableStateOf(0f) }
@@ -79,7 +82,7 @@ fun EquityCurveChart(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "داده‌ای برای رسم نمودار رشد سرمایه وجود ندارد. (معاملات بسته شده نیاز است)",
+                    text = Loc.tr("no_chart_data", lang),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Medium,
@@ -95,7 +98,7 @@ fun EquityCurveChart(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "نمودار عملکرد سود و زیان تراکمی",
+                        text = Loc.tr("chart_title", lang),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold
@@ -136,18 +139,17 @@ fun EquityCurveChart(
                         )
                     }
 
-                    // Zero baseline (where equity is 0)
-                    val zeroY = if (range == 0.0) height / 2f else {
-                        (height * 0.85f - (0.0 - minEquity) * verticalScale).toFloat()
+                    // Initial balance baseline
+                    val baselineY = if (range == 0.0) height / 2f else {
+                        (height * 0.85f - (initialBalance - minEquity) * verticalScale).toFloat()
                     }
-                    if (minEquity < 0.0 && maxEquity > 0.0) {
-                        drawLine(
-                            color = Color.Gray.copy(alpha = 0.35f),
-                            start = Offset(0f, zeroY),
-                            end = Offset(width, zeroY),
-                            strokeWidth = 1.5.dp.toPx()
-                        )
-                    }
+                    val zeroY = baselineY
+                    drawLine(
+                        color = Color.Gray.copy(alpha = 0.35f),
+                        start = Offset(0f, baselineY),
+                        end = Offset(width, baselineY),
+                        strokeWidth = 1.5.dp.toPx()
+                    )
 
                     // Compute points coordinates
                     val coordinates = equityPoints.mapIndexed { index, value ->
