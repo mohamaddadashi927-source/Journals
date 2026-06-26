@@ -60,6 +60,8 @@ fun DashboardScreen(
     val accountName by viewModel.accountName.collectAsState()
     val isAccountInitialized by viewModel.isAccountInitialized.collectAsState()
 
+    var activeTab by remember { mutableStateOf(0) } // 0: Dashboard, 1: Calendar, 2: Analysis, 3: Journal, 4: Goals
+
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
         "USDT" -> "USDT"
@@ -141,12 +143,20 @@ fun DashboardScreen(
             )
         }
 
+        val screenTitle = when (activeTab) {
+            0 -> if (isAccountInitialized) accountName else Loc.tr("dashboard_title", language)
+            1 -> if (language == "fa") "تقویم معاملاتی" else "Trading Calendar"
+            2 -> if (language == "fa") "تحلیل عملکرد پیشرفته" else "Performance Analytics"
+            3 -> if (language == "fa") "دفترچه روانشناسی روزانه" else "Daily Psychology Journal"
+            else -> if (language == "fa") "اهداف معاملاتی و چک‌لیست" else "Trading Goals & Rules"
+        }
+
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = if (isAccountInitialized) accountName else Loc.tr("dashboard_title", language),
+                            text = screenTitle,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -171,118 +181,167 @@ fun DashboardScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = Loc.tr("add_trade", language))
                 }
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                ) {
+                    NavigationBarItem(
+                        selected = activeTab == 0,
+                        onClick = { activeTab = 0 },
+                        icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                        label = { Text(if (language == "fa") "داشبورد" else "Dashboard", fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == 1,
+                        onClick = { activeTab = 1 },
+                        icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                        label = { Text(if (language == "fa") "تقویم" else "Calendar", fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == 2,
+                        onClick = { activeTab = 2 },
+                        icon = { Icon(Icons.Default.Analytics, contentDescription = null) },
+                        label = { Text(if (language == "fa") "تحلیل" else "Analysis", fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == 3,
+                        onClick = { activeTab = 3 },
+                        icon = { Icon(Icons.Default.Book, contentDescription = null) },
+                        label = { Text(if (language == "fa") "یادداشت" else "Journal", fontSize = 10.sp) }
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == 4,
+                        onClick = { activeTab = 4 },
+                        icon = { Icon(Icons.Default.Stars, contentDescription = null) },
+                        label = { Text(if (language == "fa") "اهداف" else "Goals", fontSize = 10.sp) }
+                    )
+                }
             }
         ) { paddingValues ->
-            LazyColumn(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp)
             ) {
-                // Key Portfolio Stat Highlights
-                item {
-                    PortfolioSummaryCard(
-                        stats = stats,
-                        currencySymbol = currencySymbol,
-                        initialBalance = initialBalance,
-                        lang = language
-                    )
-                }
-
-                // Equity Curve
-                item {
-                    EquityCurveChart(
-                        trades = trades,
-                        currencySymbol = currencySymbol,
-                        initialBalance = initialBalance,
-                        lang = language,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(260.dp)
-                    )
-                }
-
-                // Stats Grid
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatSmallCard(
-                            title = if (language == "fa") "بیشترین سود" else if (language == "ar") "أقصى ربح" else "Max Profit",
-                            value = "${if (stats.maxProfit >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", stats.maxProfit)} $currencySymbol",
-                            icon = Icons.Default.TrendingUp,
-                            color = EmeraldGreen,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatSmallCard(
-                            title = if (language == "fa") "بیشترین ضرر" else if (language == "ar") "أقصى خسارة" else "Max Loss",
-                            value = "${String.format(Locale.US, "%,.1f", stats.maxLoss)} $currencySymbol",
-                            icon = Icons.Default.TrendingDown,
-                            color = CrimsonRed,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                // Recent Trades Section Header
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (language == "fa") "آخرین معاملات" else if (language == "ar") "آخر صفقات" else "Latest Trades",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        TextButton(onClick = onNavigateToTradeList) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (language == "fa") "مشاهده همه" else if (language == "ar") "عرض الكل" else "View All")
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    Icons.AutoMirrored.Filled.TrendingFlat,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                when (activeTab) {
+                    0 -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Key Portfolio Stat Highlights
+                            item {
+                                PortfolioSummaryCard(
+                                    stats = stats,
+                                    currencySymbol = currencySymbol,
+                                    initialBalance = initialBalance,
+                                    lang = language
                                 )
+                            }
+
+                            // Equity Curve
+                            item {
+                                EquityCurveChart(
+                                    trades = trades,
+                                    currencySymbol = currencySymbol,
+                                    initialBalance = initialBalance,
+                                    lang = language,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(260.dp)
+                                )
+                            }
+
+                            // Stats Grid
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    StatSmallCard(
+                                        title = if (language == "fa") "بیشترین سود" else if (language == "ar") "أقصى ربح" else "Max Profit",
+                                        value = "${if (stats.maxProfit >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", stats.maxProfit)} $currencySymbol",
+                                        icon = Icons.Default.TrendingUp,
+                                        color = EmeraldGreen,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    StatSmallCard(
+                                        title = if (language == "fa") "بیشترین ضرر" else if (language == "ar") "أقصى خسارة" else "Max Loss",
+                                        value = "${String.format(Locale.US, "%,.1f", stats.maxLoss)} $currencySymbol",
+                                        icon = Icons.Default.TrendingDown,
+                                        color = CrimsonRed,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+
+                            // Recent Trades Section Header
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (language == "fa") "آخرین معاملات" else if (language == "ar") "آخر صفقات" else "Latest Trades",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    TextButton(onClick = onNavigateToTradeList) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(if (language == "fa") "مشاهده همه" else if (language == "ar") "عرض الكل" else "View All")
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.TrendingFlat,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // List of 5 recent trades
+                            if (recentTrades.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = if (language == "fa") "هیچ معامله‌ای ثبت نشده است." else if (language == "ar") "لم يتم تسجيل أي صفقة بعد." else "No trades registered yet.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(recentTrades, key = { it.id }) { trade ->
+                                    TradeItemRow(
+                                        trade = trade,
+                                        currencySymbol = currencySymbol,
+                                        lang = language,
+                                        onClick = { onNavigateToTradeDetail(trade.id) }
+                                    )
+                                }
+                            }
+
+                            item {
+                                Spacer(modifier = Modifier.height(32.dp))
                             }
                         }
                     }
-                }
-
-                // List of 5 recent trades
-                if (recentTrades.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = if (language == "fa") "هیچ معامله‌ای ثبت نشده است." else if (language == "ar") "لم يتم تسجيل أي صفقة بعد." else "No trades registered yet.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                } else {
-                    items(recentTrades, key = { it.id }) { trade ->
-                        TradeItemRow(
-                            trade = trade,
-                            currencySymbol = currencySymbol,
-                            lang = language,
-                            onClick = { onNavigateToTradeDetail(trade.id) }
-                        )
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
+                    1 -> CalendarTab(viewModel, onNavigateToTradeDetail)
+                    2 -> PerformanceTab(viewModel)
+                    3 -> DailyJournalTab(viewModel)
+                    4 -> GoalsTab(viewModel)
                 }
             }
         }

@@ -92,6 +92,12 @@ fun AddEditTradeScreen(
     var richNotesValue by remember { mutableStateOf(TextFieldValue("")) }
     var emotionalStateSelected by remember { mutableStateOf("") }
     var imagePathState by remember { mutableStateOf<String?>(null) }
+    var imageBeforePathState by remember { mutableStateOf<String?>(null) }
+    var imageEntryPathState by remember { mutableStateOf<String?>(null) }
+    var imageExitPathState by remember { mutableStateOf<String?>(null) }
+    var strategyText by remember { mutableStateOf("") }
+    var gradeText by remember { mutableStateOf("A") }
+    val checkedResultsList = remember { mutableStateListOf<String>() }
     var selectedTagsList by remember { mutableStateOf(mutableStateListOf<String>()) }
     var postNotesText by remember { mutableStateOf("") }
 
@@ -132,7 +138,17 @@ fun AddEditTradeScreen(
                     richNotesValue = TextFieldValue(text = notes, selection = TextRange(notes.length))
                     emotionalStateSelected = trade.emotionalState
                     imagePathState = trade.imagePath
+                    imageBeforePathState = trade.imageBeforePath
+                    imageEntryPathState = trade.imageEntryPath
+                    imageExitPathState = trade.imageExitPath
+                    strategyText = trade.strategy
+                    gradeText = trade.grade.ifEmpty { "A" }
                     postNotesText = trade.postTradeNotes
+                    
+                    checkedResultsList.clear()
+                    if (trade.checklistResults.isNotEmpty()) {
+                        checkedResultsList.addAll(trade.checklistResults.split(","))
+                    }
                     
                     selectedTagsList.clear()
                     if (trade.tags.isNotEmpty()) {
@@ -158,6 +174,8 @@ fun AddEditTradeScreen(
         }
     }
 
+    var activeImageSlot by remember { mutableStateOf("") } // "", "BEFORE", "ENTRY", "EXIT"
+
     // Launchers for Image Selection
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -169,7 +187,12 @@ fun AddEditTradeScreen(
                     val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
                     val path = viewModel.saveImageToLocal(bitmap)
                     if (path != null) {
-                        imagePathState = path
+                        when (activeImageSlot) {
+                            "BEFORE" -> imageBeforePathState = path
+                            "ENTRY" -> imageEntryPathState = path
+                            "EXIT" -> imageExitPathState = path
+                            else -> imagePathState = path
+                        }
                         Toast.makeText(context, "تصویر با موفقیت ضمیمه شد", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
@@ -186,7 +209,12 @@ fun AddEditTradeScreen(
             coroutineScope.launch {
                 val path = viewModel.saveImageToLocal(bitmap)
                 if (path != null) {
-                    imagePathState = path
+                    when (activeImageSlot) {
+                        "BEFORE" -> imageBeforePathState = path
+                        "ENTRY" -> imageEntryPathState = path
+                        "EXIT" -> imageExitPathState = path
+                        else -> imagePathState = path
+                    }
                     Toast.makeText(context, "تصویر از دوربین ضمیمه شد", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -670,66 +698,187 @@ fun AddEditTradeScreen(
                     }
                 }
 
-                // 8. Attached Image Container & Actions
-                Column(modifier = Modifier.fillMaxWidth()) {
+                // 8. Strategy & Grade & Checklist Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
-                        "تصویر نمودار (چارت)",
+                        "استراتژی معاملاتی و نمره‌دهی",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        color = MaterialTheme.colorScheme.primary
                     )
 
-                    if (imagePathState != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-                        ) {
-                            AsyncImage(
-                                model = File(imagePathState!!),
-                                contentDescription = "نمودار معامله",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                    OutlinedTextField(
+                        value = strategyText,
+                        onValueChange = { strategyText = it },
+                        label = { Text("استراتژی معاملاتی (مثلاً شکست خط روند یا ICT)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
-                            // Overlay clear button
-                            IconButton(
-                                onClick = { imagePathState = null },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(8.dp)
-                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                            ) {
-                                Icon(Icons.Default.Clear, contentDescription = "حذف عکس", tint = Color.White)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("امتیاز (Setup Grade) این موقعیت:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("A+", "A", "B", "C", "F").forEach { g ->
+                                val isSel = gradeText == g
+                                FilterChip(
+                                    selected = isSel,
+                                    onClick = { gradeText = g },
+                                    label = { Text(g, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                                    shape = RoundedCornerShape(8.dp)
+                                )
                             }
                         }
-                    } else {
-                        // Action buttons to attach image
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = { galleryLauncher.launch("image/*") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("انتخاب از گالری", fontSize = 12.sp)
-                            }
+                    }
 
-                            OutlinedButton(
-                                onClick = { cameraLauncher.launch() },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("عکس با دوربین", fontSize = 12.sp)
+                    // Pre-trade Checklist template
+                    val checklistTemplateItems by viewModel.allChecklistItems.collectAsState()
+                    if (checklistTemplateItems.isNotEmpty()) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "تایید چک‌لیست قبل از معامله",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            checklistTemplateItems.forEach { item ->
+                                val isChecked = item.title in checkedResultsList
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            if (isChecked) checkedResultsList.remove(item.title)
+                                            else checkedResultsList.add(item.title)
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = isChecked,
+                                        onCheckedChange = { checked ->
+                                            if (checked == true) {
+                                                if (item.title !in checkedResultsList) checkedResultsList.add(item.title)
+                                            } else {
+                                                checkedResultsList.remove(item.title)
+                                            }
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(item.title, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 9. Multiple Chart Images Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        "مدیریت تصاویر معامله (قبل، ورود و خروج)",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    // Render three slot options
+                    val slots = listOf(
+                        Triple("BEFORE", "تصویر قبل از ورود (تحلیل اولیه)", imageBeforePathState),
+                        Triple("ENTRY", "تصویر نقطه ورود (تایید موقعیت)", imageEntryPathState),
+                        Triple("EXIT", "تصویر نقطه خروج (نتیجه معامله)", imageExitPathState)
+                    )
+
+                    slots.forEach { (slotId, title, path) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+
+                            if (path != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(140.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                                ) {
+                                    AsyncImage(
+                                        model = File(path),
+                                        contentDescription = title,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+
+                                    IconButton(
+                                        onClick = {
+                                            when (slotId) {
+                                                "BEFORE" -> imageBeforePathState = null
+                                                "ENTRY" -> imageEntryPathState = null
+                                                "EXIT" -> imageExitPathState = null
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(6.dp)
+                                            .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                            .size(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Clear, contentDescription = "حذف", tint = Color.White, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            activeImageSlot = slotId
+                                            galleryLauncher.launch("image/*")
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("گالری", fontSize = 11.sp)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            activeImageSlot = slotId
+                                            cameraLauncher.launch()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("دوربین", fontSize = 11.sp)
+                                    }
+                                }
                             }
                         }
                     }
@@ -813,6 +962,12 @@ fun AddEditTradeScreen(
                                 fees = fees,
                                 reason = richNotesValue.text,
                                 imagePath = imagePathState,
+                                imageBeforePath = imageBeforePathState,
+                                imageEntryPath = imageEntryPathState,
+                                imageExitPath = imageExitPathState,
+                                strategy = strategyText,
+                                grade = gradeText,
+                                checklistResults = checkedResultsList.joinToString(","),
                                 tags = tagsJoined,
                                 postTradeNotes = postNotesText,
                                 richNotes = richNotesValue.text,

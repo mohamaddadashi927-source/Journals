@@ -12,11 +12,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [Trade::class, Market::class, Tag::class], version = 2, exportSchema = false)
+@Database(
+    entities = [
+        Trade::class,
+        Market::class,
+        Tag::class,
+        com.example.data.model.DailyJournal::class,
+        com.example.data.model.ChecklistItem::class
+    ],
+    version = 3,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tradeDao(): TradeDao
     abstract fun marketDao(): MarketDao
     abstract fun tagDao(): TagDao
+    abstract fun dailyJournalDao(): DailyJournalDao
+    abstract fun checklistItemDao(): ChecklistItemDao
 
     companion object {
         @Volatile
@@ -65,6 +77,16 @@ abstract class AppDatabase : RoomDatabase() {
                         Tag(name = "Pullback")
                     )
                     tagDao.insertTags(defaultTags)
+
+                    val checklistItemDao = database.checklistItemDao()
+                    val defaultChecklists = listOf(
+                        com.example.data.model.ChecklistItem(title = "آیا حد ضرر (Stop Loss) مشخص شده است؟"),
+                        com.example.data.model.ChecklistItem(title = "آیا حد سود (Take Profit) مشخص شده است؟"),
+                        com.example.data.model.ChecklistItem(title = "آیا میزان ریسک معامله بر اساس مدیریت سرمایه است؟"),
+                        com.example.data.model.ChecklistItem(title = "آیا معامله با استراتژی اصلی من همخوانی کامل دارد؟"),
+                        com.example.data.model.ChecklistItem(title = "آیا احساس هیجان، طمع یا انتقام در تصمیم من دخیل نیست؟")
+                    )
+                    checklistItemDao.insertChecklistItems(defaultChecklists)
                 }
             }
         }

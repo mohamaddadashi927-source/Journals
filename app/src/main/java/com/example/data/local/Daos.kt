@@ -56,3 +56,43 @@ interface TagDao {
     @Delete
     suspend fun deleteTag(tag: Tag)
 }
+
+@Dao
+interface DailyJournalDao {
+    @Query("SELECT * FROM daily_journals ORDER BY dateString DESC")
+    fun getAllDailyJournals(): Flow<List<com.example.data.model.DailyJournal>>
+
+    @Query("SELECT * FROM daily_journals WHERE dateString = :dateString")
+    fun getDailyJournalByDate(dateString: String): Flow<com.example.data.model.DailyJournal?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDailyJournal(journal: com.example.data.model.DailyJournal)
+
+    @Delete
+    suspend fun deleteDailyJournal(journal: com.example.data.model.DailyJournal)
+
+    @Query("DELETE FROM daily_journals")
+    suspend fun deleteAllDailyJournals()
+}
+
+@Dao
+interface ChecklistItemDao {
+    @Query("SELECT * FROM checklist_items WHERE isEnabled = 1 ORDER BY id ASC")
+    fun getEnabledChecklistItems(): Flow<List<com.example.data.model.ChecklistItem>>
+
+    @Query("SELECT * FROM checklist_items ORDER BY id ASC")
+    fun getAllChecklistItems(): Flow<List<com.example.data.model.ChecklistItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChecklistItem(item: com.example.data.model.ChecklistItem): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChecklistItems(items: List<com.example.data.model.ChecklistItem>)
+
+    @Delete
+    suspend fun deleteChecklistItem(item: com.example.data.model.ChecklistItem)
+
+    @Query("DELETE FROM checklist_items")
+    suspend fun deleteAllChecklistItems()
+}
+

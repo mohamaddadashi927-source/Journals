@@ -247,6 +247,13 @@ fun TradeDetailScreen(
                             DetailRow(label = "قیمت خروج:", value = if (isClosed) String.format(Locale.US, "%,.4f", trade.exitPrice) else "تعیین نشده (موقعیت باز)")
 
                             DetailRow(label = "زمان ثبت معامله:", value = sdf.format(Date(trade.dateTime)))
+
+                            if (!trade.strategy.isNullOrEmpty()) {
+                                DetailRow(label = "استراتژی معاملاتی:", value = trade.strategy, valueColor = MaterialTheme.colorScheme.primary)
+                            }
+                            if (!trade.grade.isNullOrEmpty()) {
+                                DetailRow(label = "امتیاز موقعیت (Grade):", value = trade.grade, valueColor = if (trade.grade.startsWith("A")) EmeraldGreen else MaterialTheme.colorScheme.secondary)
+                            }
                         }
                     }
 
@@ -343,36 +350,123 @@ fun TradeDetailScreen(
                         }
                     }
 
-                    // Attached Chart Screenshot & AI Analyzer Trigger
-                    if (trade.imagePath != null) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text("تصویر چارت معامله", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { showZoomImageDialog = true }
-                            ) {
-                                AsyncImage(
-                                    model = File(trade.imagePath),
-                                    contentDescription = "چارت معامله",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .padding(8.dp)
-                                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.ZoomIn, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("مشاهده بزرگ‌تر", color = Color.White, fontSize = 10.sp)
+                    // Checklist Results Checked section
+                    if (!trade.checklistResults.isNullOrEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(24.dp)
+                                ),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("چک‌لیست تایید شده قبل از ورود", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = EmeraldGreen)
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                                trade.checklistResults.split(",").forEach { item ->
+                                    if (item.trim().isNotEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(item, style = MaterialTheme.typography.bodyMedium)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 10. Multi-image Charts Gallery
+                    val hasBefore = !trade.imageBeforePath.isNullOrEmpty()
+                    val hasEntry = !trade.imageEntryPath.isNullOrEmpty()
+                    val hasExit = !trade.imageExitPath.isNullOrEmpty()
+
+                    if (hasBefore || hasEntry || hasExit || trade.imagePath != null) {
+                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("گالری چارت‌های موقعیت معاملاتی", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+
+                            val galleryList = listOf(
+                                Triple("BEFORE", "چارت تحلیل قبل از ورود", trade.imageBeforePath),
+                                Triple("ENTRY", "چارت نقطه ورود و تاییدیه", trade.imageEntryPath),
+                                Triple("EXIT", "چارت نقطه خروج و فرجام", trade.imageExitPath),
+                                Triple("MAIN", "تصویر تکمیلی چارت", trade.imagePath)
+                            ).filter { it.third != null }
+
+                            galleryList.forEach { (slotId, title, path) ->
+                                if (path != null) {
+                                    var activeZoomPath by remember { mutableStateOf<String?>(null) }
+                                    Card(
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(200.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable { activeZoomPath = path }
+                                            ) {
+                                                AsyncImage(
+                                                    model = File(path),
+                                                    contentDescription = title,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomEnd)
+                                                        .padding(8.dp)
+                                                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Default.ZoomIn, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text("بزرگ‌نمایی", color = Color.White, fontSize = 10.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Zoom dialogue per slot
+                                    if (activeZoomPath != null) {
+                                        Dialog(
+                                            onDismissRequest = { activeZoomPath = null },
+                                            properties = DialogProperties(usePlatformDefaultWidth = false)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.Black)
+                                                    .clickable { activeZoomPath = null },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                AsyncImage(
+                                                    model = File(activeZoomPath!!),
+                                                    contentDescription = "Zoomed Image",
+                                                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                                                )
+                                                IconButton(
+                                                    onClick = { activeZoomPath = null },
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopEnd)
+                                                        .padding(16.dp)
+                                                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                                ) {
+                                                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
