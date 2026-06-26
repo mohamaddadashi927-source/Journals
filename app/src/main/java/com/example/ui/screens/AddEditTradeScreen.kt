@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import com.example.ui.util.Loc
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -74,6 +75,7 @@ fun AddEditTradeScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val language by viewModel.language.collectAsState()
 
     val markets by viewModel.allMarkets.collectAsState()
     val tags by viewModel.allTags.collectAsState()
@@ -193,10 +195,10 @@ fun AddEditTradeScreen(
                             "EXIT" -> imageExitPathState = path
                             else -> imagePathState = path
                         }
-                        Toast.makeText(context, "تصویر با موفقیت ضمیمه شد", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, Loc.tr("toast_image_attached", language), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(context, "خطا در ضمیمه کردن تصویر: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "${Loc.tr("toast_image_error", language)} ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -215,26 +217,30 @@ fun AddEditTradeScreen(
                         "EXIT" -> imageExitPathState = path
                         else -> imagePathState = path
                     }
-                    Toast.makeText(context, "تصویر از دوربین ضمیمه شد", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, Loc.tr("toast_image_camera", language), Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
-    // Force RTL
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    // Dynamic layout direction based on selected language
+    val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            if (tradeId == null) "ثبت معامله جدید" else "ویرایش معامله",
+                            Loc.tr(if (tradeId == null) "add_trade" else "edit_trade", language),
                             fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "بازگشت")
+                            Icon(
+                                imageVector = if (language == "en") Icons.Default.ArrowBack else Icons.Default.ArrowForward,
+                                contentDescription = Loc.tr("back", language)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -271,7 +277,7 @@ fun AddEditTradeScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.ArrowUpward, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("خرید (BUY)", fontWeight = FontWeight.Bold)
+                            Text(Loc.tr("buy", language), fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -287,7 +293,7 @@ fun AddEditTradeScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.ArrowDownward, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("فروش (SELL)", fontWeight = FontWeight.Bold)
+                            Text(Loc.tr("sell", language), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -300,7 +306,7 @@ fun AddEditTradeScreen(
                             selectedMarketText = it
                             marketDropdownExpanded = true
                         },
-                        label = { Text("نماد بازار (مثلا BTC/USDT)") },
+                        label = { Text(Loc.tr("market_placeholder", language)) },
                         leadingIcon = { Icon(Icons.Default.ShowChart, contentDescription = null) },
                         trailingIcon = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -308,7 +314,7 @@ fun AddEditTradeScreen(
                                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                                 }
                                 IconButton(onClick = { showNewMarketDialog = true }) {
-                                    Icon(Icons.Default.Add, contentDescription = "افزودن بازار جدید")
+                                    Icon(Icons.Default.Add, contentDescription = Loc.tr("add_market_title", language))
                                 }
                             }
                         },
@@ -326,7 +332,7 @@ fun AddEditTradeScreen(
                         }
                         if (filteredMarkets.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("بازاری یافت نشد. برای تعریف سریع کلیک کنید...") },
+                                text = { Text(Loc.tr("market_not_found", language)) },
                                 onClick = {
                                     newMarketInput = selectedMarketText
                                     showNewMarketDialog = true
@@ -355,7 +361,7 @@ fun AddEditTradeScreen(
                     OutlinedTextField(
                         value = volumeStr,
                         onValueChange = { volumeStr = it },
-                        label = { Text("حجم معامله") },
+                        label = { Text(Loc.tr("volume", language)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -364,7 +370,7 @@ fun AddEditTradeScreen(
                     OutlinedTextField(
                         value = entryPriceStr,
                         onValueChange = { entryPriceStr = it },
-                        label = { Text("قیمت ورود") },
+                        label = { Text(Loc.tr("entry_price", language)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -375,7 +381,7 @@ fun AddEditTradeScreen(
                 OutlinedTextField(
                     value = exitPriceStr,
                     onValueChange = { exitPriceStr = it },
-                    label = { Text("قیمت خروج (اختیاری)") },
+                    label = { Text(Loc.tr("exit_price", language)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -406,7 +412,7 @@ fun AddEditTradeScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "ثبت دستی سود یا زیان معامله",
+                                text = Loc.tr("pnl_manual_label", language),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -421,8 +427,8 @@ fun AddEditTradeScreen(
                                 OutlinedTextField(
                                     value = customPnlStr,
                                     onValueChange = { customPnlStr = it },
-                                    label = { Text("میزان سود/زیان معامله") },
-                                    placeholder = { Text("مثلا 150.0") },
+                                    label = { Text(Loc.tr("pnl_amount", language)) },
+                                    placeholder = { Text(Loc.tr("pnl_placeholder", language)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
@@ -442,7 +448,7 @@ fun AddEditTradeScreen(
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.fillMaxHeight()
                                     ) {
-                                        Text("سود (+)", fontWeight = FontWeight.Bold)
+                                        Text(Loc.tr("profit_plus", language), fontWeight = FontWeight.Bold)
                                     }
 
                                     Button(
@@ -454,7 +460,7 @@ fun AddEditTradeScreen(
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.fillMaxHeight()
                                     ) {
-                                        Text("زیان (-)", fontWeight = FontWeight.Bold)
+                                        Text(Loc.tr("loss_minus", language), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -472,7 +478,7 @@ fun AddEditTradeScreen(
                         value = sdf.format(Date(dateTime)),
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("تاریخ و ساعت") },
+                        label = { Text(Loc.tr("date_time", language)) },
                         leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -507,7 +513,7 @@ fun AddEditTradeScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.height(56.dp)
                     ) {
-                        Text("تغییر")
+                        Text(Loc.tr("change_btn", language))
                     }
                 }
 
@@ -526,7 +532,7 @@ fun AddEditTradeScreen(
                 ) {
                     // Emotional State Label
                     Text(
-                        "حالت روحی شما حین ورود به معامله",
+                        Loc.tr("emotional_label", language),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -534,12 +540,12 @@ fun AddEditTradeScreen(
 
                     // Emotional State Selection Chips row
                     val emotions = listOf(
-                        Triple("CALM", "🟢 آرام", EmeraldGreen),
-                        Triple("CONFIDENT", "🔵 مطمئن", MaterialTheme.colorScheme.primary),
-                        Triple("EXCITED", "🟡 هیجان‌زده", Color(0xFFFFB300)),
-                        Triple("ANXIOUS", "🟠 مضطرب", Color(0xFFFF6D00)),
-                        Triple("GREEDY", "🔴 حریص", CrimsonRed),
-                        Triple("FEARFUL", "🟣 ترسیده", Color(0xFF9C27B0))
+                        Triple("CALM", Loc.tr("emotion_calm", language), EmeraldGreen),
+                        Triple("CONFIDENT", Loc.tr("emotion_confident", language), MaterialTheme.colorScheme.primary),
+                        Triple("EXCITED", Loc.tr("emotion_excited", language), Color(0xFFFFB300)),
+                        Triple("ANXIOUS", Loc.tr("emotion_anxious", language), Color(0xFFFF6D00)),
+                        Triple("GREEDY", Loc.tr("emotion_greedy", language), CrimsonRed),
+                        Triple("FEARFUL", Loc.tr("emotion_fearful", language), Color(0xFF9C27B0))
                     )
 
                     FlowRow(
@@ -571,7 +577,7 @@ fun AddEditTradeScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
 
                     Text(
-                        "دلایل ورود و یادداشت تفصیلی",
+                        Loc.tr("rich_notes_header", language),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -581,7 +587,7 @@ fun AddEditTradeScreen(
                     OutlinedTextField(
                         value = richNotesValue,
                         onValueChange = { richNotesValue = it },
-                        placeholder = { Text("دلایل ورود، استراتژی تحلیل، احساسات و جزئیات ترید را با قالب‌بندی غنی ثبت کنید...") },
+                        placeholder = { Text(Loc.tr("rich_notes_placeholder", language)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(130.dp),
@@ -628,7 +634,7 @@ fun AddEditTradeScreen(
                                             tint = MaterialTheme.colorScheme.primary
                                         )
                                         Text(
-                                            "پیش‌نمایش زنده نوشته غنی شده",
+                                            Loc.tr("live_preview", language),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -664,13 +670,13 @@ fun AddEditTradeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "برچسب‌ها (استراتژی)",
+                            Loc.tr("tags_label", language),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         IconButton(onClick = { showNewTagDialog = true }) {
-                            Icon(Icons.Default.AddCircle, contentDescription = "برچسب جدید")
+                            Icon(Icons.Default.AddCircle, contentDescription = Loc.tr("new_tag", language))
                         }
                     }
 
@@ -712,7 +718,7 @@ fun AddEditTradeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "استراتژی معاملاتی و نمره‌دهی",
+                        Loc.tr("strategy_grade_title", language),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -721,13 +727,13 @@ fun AddEditTradeScreen(
                     OutlinedTextField(
                         value = strategyText,
                         onValueChange = { strategyText = it },
-                        label = { Text("استراتژی معاملاتی (مثلاً شکست خط روند یا ICT)") },
+                        label = { Text(Loc.tr("strategy_label", language)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("امتیاز (Setup Grade) این موقعیت:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(Loc.tr("setup_grade_label", language), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             listOf("A+", "A", "B", "C", "F").forEach { g ->
                                 val isSel = gradeText == g
@@ -747,7 +753,7 @@ fun AddEditTradeScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                "تایید چک‌لیست قبل از معامله",
+                                Loc.tr("pre_trade_checklist_title", language),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -797,7 +803,7 @@ fun AddEditTradeScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "مدیریت تصاویر معامله (قبل، ورود و خروج)",
+                        Loc.tr("image_management_title", language),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -805,9 +811,9 @@ fun AddEditTradeScreen(
 
                     // Render three slot options
                     val slots = listOf(
-                        Triple("BEFORE", "تصویر قبل از ورود (تحلیل اولیه)", imageBeforePathState),
-                        Triple("ENTRY", "تصویر نقطه ورود (تایید موقعیت)", imageEntryPathState),
-                        Triple("EXIT", "تصویر نقطه خروج (نتیجه معامله)", imageExitPathState)
+                        Triple("BEFORE", Loc.tr("image_before_label", language), imageBeforePathState),
+                        Triple("ENTRY", Loc.tr("image_entry_label", language), imageEntryPathState),
+                        Triple("EXIT", Loc.tr("image_exit_label", language), imageExitPathState)
                     )
 
                     slots.forEach { (slotId, title, path) ->
@@ -843,7 +849,7 @@ fun AddEditTradeScreen(
                                             .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                                             .size(32.dp)
                                     ) {
-                                        Icon(Icons.Default.Clear, contentDescription = "حذف", tint = Color.White, modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.Clear, contentDescription = Loc.tr("delete", language), tint = Color.White, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             } else {
@@ -862,7 +868,7 @@ fun AddEditTradeScreen(
                                     ) {
                                         Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("گالری", fontSize = 11.sp)
+                                        Text(Loc.tr("gallery_btn", language), fontSize = 11.sp)
                                     }
 
                                     OutlinedButton(
@@ -876,7 +882,7 @@ fun AddEditTradeScreen(
                                     ) {
                                         Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("دوربین", fontSize = 11.sp)
+                                        Text(Loc.tr("camera_btn", language), fontSize = 11.sp)
                                     }
                                 }
                             }
@@ -888,7 +894,7 @@ fun AddEditTradeScreen(
                 if (exitPriceStr.isNotEmpty() || tradeId != null) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            "بررسی بعد از معامله (Post-Trade Review)",
+                            Loc.tr("post_trade_review_title", language),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -897,7 +903,7 @@ fun AddEditTradeScreen(
                         OutlinedTextField(
                             value = postNotesText,
                             onValueChange = { postNotesText = it },
-                            placeholder = { Text("درس‌های گرفته شده، اشتباهات معاملاتی، مدیریت احساسات...") },
+                            placeholder = { Text(Loc.tr("post_trade_review_placeholder", language)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(100.dp),
@@ -918,7 +924,7 @@ fun AddEditTradeScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("انصراف")
+                        Text(Loc.tr("cancel", language))
                     }
 
                     Button(
@@ -930,15 +936,15 @@ fun AddEditTradeScreen(
                             val exit = if (exitPriceStr.isEmpty()) null else exitPriceStr.toDoubleOrNull()
 
                             if (selectedMarketText.isEmpty()) {
-                                Toast.makeText(context, "لطفاً نماد بازار را مشخص کنید.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, Loc.tr("toast_fill_market", language), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
                             if (vol == null || vol <= 0.0) {
-                                Toast.makeText(context, "لطفاً حجم معامله معتبری وارد کنید.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, Loc.tr("toast_fill_volume", language), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
                             if (entry == null || entry <= 0.0) {
-                                Toast.makeText(context, "لطفاً قیمت ورود معتبری وارد کنید.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, Loc.tr("toast_fill_entry_price", language), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -973,7 +979,7 @@ fun AddEditTradeScreen(
                                 richNotes = richNotesValue.text,
                                 emotionalState = emotionalStateSelected,
                                 customPnl = cpnl
-                            )
+                             )
 
                             if (tradeId == null) {
                                 viewModel.insertTrade(trade)
@@ -985,7 +991,7 @@ fun AddEditTradeScreen(
                         modifier = Modifier.weight(1.5f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("ذخیره موقعیت", fontWeight = FontWeight.Bold)
+                        Text(Loc.tr("save_position", language), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -995,12 +1001,12 @@ fun AddEditTradeScreen(
         if (showNewMarketDialog) {
             AlertDialog(
                 onDismissRequest = { showNewMarketDialog = false },
-                title = { Text("افزودن بازار جدید") },
+                title = { Text(Loc.tr("add_market_title", language)) },
                 text = {
                     OutlinedTextField(
                         value = newMarketInput,
                         onValueChange = { newMarketInput = it },
-                        placeholder = { Text("مثلا ADA/USDT") }
+                        placeholder = { Text(Loc.tr("add_market_placeholder", language)) }
                     )
                 },
                 confirmButton = {
@@ -1012,12 +1018,12 @@ fun AddEditTradeScreen(
                             showNewMarketDialog = false
                         }
                     }) {
-                        Text("افزودن")
+                        Text(Loc.tr("add_btn", language))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showNewMarketDialog = false }) {
-                        Text("انصراف")
+                        Text(Loc.tr("cancel", language))
                     }
                 }
             )
@@ -1027,12 +1033,12 @@ fun AddEditTradeScreen(
         if (showNewTagDialog) {
             AlertDialog(
                 onDismissRequest = { showNewTagDialog = false },
-                title = { Text("افزودن برچسب (استراتژی) جدید") },
+                title = { Text(Loc.tr("add_tag_title", language)) },
                 text = {
                     OutlinedTextField(
                         value = newTagInput,
                         onValueChange = { newTagInput = it },
-                        placeholder = { Text("مثلا کانال صعودی") }
+                        placeholder = { Text(Loc.tr("add_tag_placeholder", language)) }
                     )
                 },
                 confirmButton = {
@@ -1046,12 +1052,12 @@ fun AddEditTradeScreen(
                             showNewTagDialog = false
                         }
                     }) {
-                        Text("افزودن")
+                        Text(Loc.tr("add_btn", language))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showNewTagDialog = false }) {
-                        Text("انصراف")
+                        Text(Loc.tr("cancel", language))
                     }
                 }
             )

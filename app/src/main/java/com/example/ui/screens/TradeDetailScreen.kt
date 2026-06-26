@@ -237,22 +237,22 @@ fun TradeDetailScreen(
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("جزئیات معامله", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(Loc.tr("trade_details_title", language), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                             
                             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
 
-                            DetailRow(label = "نوع معامله:", value = if (trade.side == "BUY") "خرید (BUY)" else "فروش (SELL)", valueColor = if (trade.side == "BUY") EmeraldGreen else CrimsonRed)
-                            DetailRow(label = "حجم معامله:", value = trade.volume.toString())
-                            DetailRow(label = "قیمت ورود:", value = String.format(Locale.US, "%,.4f", trade.entryPrice))
-                            DetailRow(label = "قیمت خروج:", value = if (isClosed) String.format(Locale.US, "%,.4f", trade.exitPrice) else "تعیین نشده (موقعیت باز)")
+                            DetailRow(label = Loc.tr("trade_type", language), value = if (trade.side == "BUY") Loc.tr("buy", language) else Loc.tr("sell", language), valueColor = if (trade.side == "BUY") EmeraldGreen else CrimsonRed)
+                            DetailRow(label = Loc.tr("volume", language) + ":", value = trade.volume.toString())
+                            DetailRow(label = Loc.tr("entry_price", language) + ":", value = String.format(Locale.US, "%,.4f", trade.entryPrice))
+                            DetailRow(label = Loc.tr("exit_price", language) + ":", value = if (isClosed) String.format(Locale.US, "%,.4f", trade.exitPrice) else Loc.tr("open_position", language))
 
-                            DetailRow(label = "زمان ثبت معامله:", value = sdf.format(Date(trade.dateTime)))
+                            DetailRow(label = Loc.tr("trade_time", language), value = sdf.format(Date(trade.dateTime)))
 
                             if (!trade.strategy.isNullOrEmpty()) {
-                                DetailRow(label = "استراتژی معاملاتی:", value = trade.strategy, valueColor = MaterialTheme.colorScheme.primary)
+                                DetailRow(label = Loc.tr("trading_strategy", language), value = trade.strategy, valueColor = MaterialTheme.colorScheme.primary)
                             }
                             if (!trade.grade.isNullOrEmpty()) {
-                                DetailRow(label = "امتیاز موقعیت (Grade):", value = trade.grade, valueColor = if (trade.grade.startsWith("A")) EmeraldGreen else MaterialTheme.colorScheme.secondary)
+                                DetailRow(label = Loc.tr("grade_label", language), value = trade.grade, valueColor = if (trade.grade.startsWith("A")) EmeraldGreen else MaterialTheme.colorScheme.secondary)
                             }
                         }
                     }
@@ -260,7 +260,7 @@ fun TradeDetailScreen(
                     // Tags Used
                     if (trade.tags.isNotEmpty()) {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            Text("برچسب‌های استراتژی:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(Loc.tr("strategy_tags", language), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 trade.tags.split(",").forEach { tag ->
@@ -365,7 +365,7 @@ fun TradeDetailScreen(
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("چک‌لیست تایید شده قبل از ورود", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = EmeraldGreen)
+                                Text(Loc.tr("checklist_confirmed", language), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = EmeraldGreen)
                                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                                 trade.checklistResults.split(",").forEach { item ->
                                     if (item.trim().isNotEmpty()) {
@@ -387,13 +387,13 @@ fun TradeDetailScreen(
 
                     if (hasBefore || hasEntry || hasExit || trade.imagePath != null) {
                         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("گالری چارت‌های موقعیت معاملاتی", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(Loc.tr("charts_gallery", language), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
 
                             val galleryList = listOf(
-                                Triple("BEFORE", "چارت تحلیل قبل از ورود", trade.imageBeforePath),
-                                Triple("ENTRY", "چارت نقطه ورود و تاییدیه", trade.imageEntryPath),
-                                Triple("EXIT", "چارت نقطه خروج و فرجام", trade.imageExitPath),
-                                Triple("MAIN", "تصویر تکمیلی چارت", trade.imagePath)
+                                Triple("BEFORE", Loc.tr("chart_before_entry", language), trade.imageBeforePath),
+                                Triple("ENTRY", Loc.tr("chart_entry_point", language), trade.imageEntryPath),
+                                Triple("EXIT", Loc.tr("chart_exit_point", language), trade.imageExitPath),
+                                Triple("MAIN", Loc.tr("chart_supplementary", language), trade.imagePath)
                             ).filter { it.third != null }
 
                             galleryList.forEach { (slotId, title, path) ->
@@ -431,7 +431,7 @@ fun TradeDetailScreen(
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         Icon(Icons.Default.ZoomIn, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                                                         Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("بزرگ‌نمایی", color = Color.White, fontSize = 10.sp)
+                                                        Text(Loc.tr("zoom_in", language), color = Color.White, fontSize = 10.sp)
                                                     }
                                                 }
                                             }
@@ -492,14 +492,14 @@ fun TradeDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("بررسی بعد از معامله (Post-Trade Review)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                Text(Loc.tr("post_trade_review_title", language), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                                 IconButton(onClick = { showPostTradeDialog = true }) {
-                                    Icon(Icons.Default.EditCalendar, contentDescription = "ویرایش یادداشت تکمیلی")
+                                    Icon(Icons.Default.EditCalendar, contentDescription = Loc.tr("edit", language))
                                 }
                             }
                             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                             Text(
-                                text = trade.postTradeNotes.ifEmpty { "هیچ یادداشت و درسی بعد از بسته شدن معامله اضافه نشده است. برای افزودن روی دکمه ادیت بالا بزنید." },
+                                text = trade.postTradeNotes.ifEmpty { Loc.tr("empty_review", language) },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 20.sp
@@ -552,13 +552,13 @@ fun TradeDetailScreen(
                                     }
                                     Column {
                                         Text(
-                                            "خروجی PDF و چاپ گزارش",
+                                            Loc.tr("pdf_export_print", language),
                                             fontWeight = FontWeight.Bold,
                                             style = MaterialTheme.typography.titleMedium,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            "دریافت فایل فرمت شده آماده اشتراک‌گذاری یا چاپ نمودار",
+                                            Loc.tr("pdf_desc", language),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -576,9 +576,9 @@ fun TradeDetailScreen(
                                                 putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
                                                 addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                             }
-                                            context.startActivity(android.content.Intent.createChooser(intent, "اشتراک‌گذاری و چاپ گزارش معامله"))
+                                            context.startActivity(android.content.Intent.createChooser(intent, Loc.tr("share_print_title", language)))
                                         } else {
-                                            Toast.makeText(context, "خطا در تولید فایل PDF", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, Loc.tr("pdf_error", language), Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 },
@@ -588,14 +588,14 @@ fun TradeDetailScreen(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 )
-                            ) {
+                              ) {
                                 Icon(
                                     Icons.Default.Share,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("تولید PDF و اشتراک‌گذاری / چاپ گزارش", fontWeight = FontWeight.Bold)
+                                Text(Loc.tr("generate_pdf_print", language), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -609,12 +609,12 @@ fun TradeDetailScreen(
         if (showPostTradeDialog) {
             AlertDialog(
                 onDismissRequest = { showPostTradeDialog = false },
-                title = { Text("ویرایش بررسی معامله") },
+                title = { Text(Loc.tr("edit_notes_title", language)) },
                 text = {
                     OutlinedTextField(
                         value = postNotesInput,
                         onValueChange = { postNotesInput = it },
-                        placeholder = { Text("مثلا: در این معامله طمع کردم و زود خارج شدم. ریسک به ریوارد مناسب رعایت شد...") },
+                        placeholder = { Text(Loc.tr("edit_notes_placeholder", language)) },
                         modifier = Modifier.fillMaxWidth().height(120.dp)
                     )
                 },
@@ -624,15 +624,15 @@ fun TradeDetailScreen(
                             val updated = it.copy(postTradeNotes = postNotesInput)
                             viewModel.updateTrade(updated)
                             showPostTradeDialog = false
-                            Toast.makeText(context, "بررسی ثبت شد", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, Loc.tr("review_saved", language), Toast.LENGTH_SHORT).show()
                         }
                     }) {
-                        Text("ثبت یادداشت")
+                        Text(Loc.tr("save_note", language))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showPostTradeDialog = false }) {
-                        Text("انصراف")
+                        Text(Loc.tr("cancel", language))
                     }
                 }
             )
@@ -642,26 +642,26 @@ fun TradeDetailScreen(
         if (showDeleteConfirmDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteConfirmDialog = false },
-                title = { Text("حذف معامله") },
-                text = { Text("آیا از حذف کامل این معامله از دفترچه ژورنال خود مطمئن هستید؟ این عمل غیرقابل بازگشت است.") },
+                title = { Text(Loc.tr("delete_confirm_title", language)) },
+                text = { Text(Loc.tr("delete_confirm_desc", language)) },
                 confirmButton = {
                     Button(
                         onClick = {
                             trade?.let {
                                 viewModel.deleteTrade(it)
                                 showDeleteConfirmDialog = false
-                                Toast.makeText(context, "معامله با موفقیت حذف شد", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, Loc.tr("toast_delete_success", language), Toast.LENGTH_SHORT).show()
                                 onNavigateBack()
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = CrimsonRed)
                     ) {
-                        Text("بله، حذف شود")
+                        Text(Loc.tr("yes_delete", language))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                        Text("انصراف")
+                        Text(Loc.tr("cancel", language))
                     }
                 }
             )
@@ -722,7 +722,7 @@ fun TradeDetailScreen(
                             .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
-                        Text("با دو انگشت بکشید تا بزرگ‌نمایی شود.", color = Color.White, fontSize = 11.sp)
+                        Text(Loc.tr("zoom_instructions", language), color = Color.White, fontSize = 11.sp)
                     }
                 }
             }

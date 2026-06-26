@@ -439,6 +439,346 @@ object Loc {
             "fa" to "هیچ معامله‌ای با این مشخصات یافت نشد.",
             "en" to "No trades found matching this criteria.",
             "ar" to "لم يتم العثور على صفقات تطابق هذه المعايير."
+        ),
+        "market_placeholder" to mapOf(
+            "fa" to "نماد بازار (مثلا BTC/USDT)",
+            "en" to "Market Symbol (e.g., BTC/USDT)",
+            "ar" to "رمز السوق (مثل BTC/USDT)"
+        ),
+        "market_not_found" to mapOf(
+            "fa" to "بازاری یافت نشد. برای تعریف سریع کلیک کنید...",
+            "en" to "No market found. Click to define quickly...",
+            "ar" to "لم يتم العثور على سوق. انقر للتحديد السريع..."
+        ),
+        "pnl_placeholder" to mapOf(
+            "fa" to "مثلا 150.0",
+            "en" to "e.g., 150.0",
+            "ar" to "مثلاً 150.0"
+        ),
+        "profit_plus" to mapOf(
+            "fa" to "سود (+)",
+            "en" to "Profit (+)",
+            "ar" to "ربح (+)"
+        ),
+        "loss_minus" to mapOf(
+            "fa" to "زیان (-)",
+            "en" to "Loss (-)",
+            "ar" to "خسارة (-)"
+        ),
+        "change_btn" to mapOf(
+            "fa" to "تغییر",
+            "en" to "Change",
+            "ar" to "تغيير"
+        ),
+        "emotion_calm" to mapOf(
+            "fa" to "🟢 آرام",
+            "en" to "🟢 Calm",
+            "ar" to "🟢 هادئ"
+        ),
+        "emotion_confident" to mapOf(
+            "fa" to "🔵 مطمئن",
+            "en" to "🔵 Confident",
+            "ar" to "🔵 واثق"
+        ),
+        "emotion_excited" to mapOf(
+            "fa" to "🟡 هیجان‌زده",
+            "en" to "🟡 Excited",
+            "ar" to "🟡 متحمس"
+        ),
+        "emotion_anxious" to mapOf(
+            "fa" to "🟠 مضطرب",
+            "en" to "🟠 Anxious",
+            "ar" to "🟠 قلق"
+        ),
+        "emotion_greedy" to mapOf(
+            "fa" to "🔴 حریص",
+            "en" to "🔴 Greedy",
+            "ar" to "🔴 جشع"
+        ),
+        "emotion_fearful" to mapOf(
+            "fa" to "🟣 ترسیده",
+            "en" to "🟣 Fearful",
+            "ar" to "🟣 خائف"
+        ),
+        "rich_notes_header" to mapOf(
+            "fa" to "دلایل ورود و یادداشت تفصیلی",
+            "en" to "Detailed Entry Reasons & Notes",
+            "ar" to "سبب الدخول وملاحظات تفصيلية"
+        ),
+        "rich_notes_placeholder" to mapOf(
+            "fa" to "دلایل ورود، استراتژی تحلیل، احساسات و جزئیات ترید را با قالب‌بندی غنی ثبت کنید...",
+            "en" to "Record your entry reasons, analysis strategy, feelings, and trade details using rich formatting...",
+            "ar" to "سجل أسباب دخولك، واستراتيجية تحليلك، ومشاعرك وتفاصيل تداولك بتنسيق غني..."
+        ),
+        "tags_label" to mapOf(
+            "fa" to "برچسب‌ها (استراتژی)",
+            "en" to "Tags (Strategy)",
+            "ar" to "الوسوم (الاستراتيجية)"
+        ),
+        "new_tag" to mapOf(
+            "fa" to "برچسب جدید",
+            "en" to "New Tag",
+            "ar" to "وسم جديد"
+        ),
+        "strategy_grade_title" to mapOf(
+            "fa" to "استراتژی معاملاتی و نمره‌دهی",
+            "en" to "Trading Strategy & Grading",
+            "ar" to "استراتيجية التداول والتقييم"
+        ),
+        "strategy_label" to mapOf(
+            "fa" to "استراتژی معاملاتی (مثلاً شکست خط روند یا ICT)",
+            "en" to "Trading Strategy (e.g., Trendline Break or ICT)",
+            "ar" to "استراتيجية التداول (مثل كسر خط الاتجاه أو ICT)"
+        ),
+        "setup_grade_label" to mapOf(
+            "fa" to "امتیاز (Setup Grade) این موقعیت:",
+            "en" to "Setup Grade of this position:",
+            "ar" to "تقييم الصفقة لهذا المركز:"
+        ),
+        "pre_trade_checklist_title" to mapOf(
+            "fa" to "تایید چک‌لیست قبل از معامله",
+            "en" to "Pre-Trade Checklist Confirmation",
+            "ar" to "تأكيد قائمة التحقق قبل التداول"
+        ),
+        "image_management_title" to mapOf(
+            "fa" to "مدیریت تصاویر معامله (قبل، ورود و خروج)",
+            "en" to "Trade Images Management (Before, Entry, Exit)",
+            "ar" to "إدارة صور الصفقة (قبل، الدخول والخروج)"
+        ),
+        "image_before_label" to mapOf(
+            "fa" to "تصویر قبل از ورود (تحلیل اولیه)",
+            "en" to "Before Entry Image (Initial Analysis)",
+            "ar" to "صورة قبل الدخول (التحليل الأولي)"
+        ),
+        "image_entry_label" to mapOf(
+            "fa" to "تصویر نقطه ورود (تایید موقعیت)",
+            "en" to "Entry Point Image (Position Confirmation)",
+            "ar" to "صورة نقطة الدخول (تأكيد المركز)"
+        ),
+        "image_exit_label" to mapOf(
+            "fa" to "تصویر نقطه خروج (نتیجه معامله)",
+            "en" to "Exit Point Image (Trade Result)",
+            "ar" to "صورة نقطة الخروج (نتيجة الصفقة)"
+        ),
+        "gallery_btn" to mapOf(
+            "fa" to "گالری",
+            "en" to "Gallery",
+            "ar" to "المعرض"
+        ),
+        "camera_btn" to mapOf(
+            "fa" to "دوربین",
+            "en" to "Camera",
+            "ar" to "الكاميرا"
+        ),
+        "post_trade_review_title" to mapOf(
+            "fa" to "بررسی بعد از معامله (Post-Trade Review)",
+            "en" to "Post-Trade Review",
+            "ar" to "مراجعة ما بعد الصفقة (Post-Trade Review)"
+        ),
+        "post_trade_review_placeholder" to mapOf(
+            "fa" to "درس‌های گرفته شده، اشتباهات معاملاتی، مدیریت احساسات...",
+            "en" to "Lessons learned, trading mistakes, emotional management...",
+            "ar" to "الدروس المستفادة، أخطاء التداول، إدارة العواطف..."
+        ),
+        "save_position" to mapOf(
+            "fa" to "ذخیره موقعیت",
+            "en" to "Save Position",
+            "ar" to "حفظ المركز"
+        ),
+        "toast_fill_market" to mapOf(
+            "fa" to "لطفاً نماد بازار را مشخص کنید.",
+            "en" to "Please specify the market symbol.",
+            "ar" to "يرجى تحديد رمز السوق."
+        ),
+        "toast_fill_volume" to mapOf(
+            "fa" to "لطفاً حجم معامله معتبری وارد کنید.",
+            "en" to "Please enter a valid volume.",
+            "ar" to "يرجى إدخال حجم صفقة صالح."
+        ),
+        "toast_fill_entry_price" to mapOf(
+            "fa" to "لطفاً قیمت ورود معتبری وارد کنید.",
+            "en" to "Please enter a valid entry price.",
+            "ar" to "يرجى إدخال سعر دخول صالح."
+        ),
+        "toast_image_attached" to mapOf(
+            "fa" to "تصویر با موفقیت ضمیمه شد",
+            "en" to "Image attached successfully",
+            "ar" to "تم إرفاق الصورة بنجاح"
+        ),
+        "toast_image_camera" to mapOf(
+            "fa" to "تصویر از دوربین ضمیمه شد",
+            "en" to "Image attached from camera",
+            "ar" to "تم إرفاق الصورة من الكاميرا"
+        ),
+        "toast_image_error" to mapOf(
+            "fa" to "خطا در ضمیمه کردن تصویر:",
+            "en" to "Error attaching image:",
+            "ar" to "خطأ في إرفاق الصورة:"
+        ),
+        "add_market_title" to mapOf(
+            "fa" to "افزودن بازار جدید",
+            "en" to "Add New Market",
+            "ar" to "إضافة سوق جديد"
+        ),
+        "add_market_placeholder" to mapOf(
+            "fa" to "مثلا ADA/USDT",
+            "en" to "e.g., ADA/USDT",
+            "ar" to "مثلاً ADA/USDT"
+        ),
+        "add_btn" to mapOf(
+            "fa" to "افزودن",
+            "en" to "Add",
+            "ar" to "إضافة"
+        ),
+        "add_tag_title" to mapOf(
+            "fa" to "افزودن برچسب (استراتژی) جدید",
+            "en" to "Add New Tag (Strategy)",
+            "ar" to "إضافة وسم (استراتيجية) جديد"
+        ),
+        "add_tag_placeholder" to mapOf(
+            "fa" to "مثلا کانال صعودی",
+            "en" to "e.g., Ascending Channel",
+            "ar" to "مثلاً قناة صاعدة"
+        ),
+        "strategy_tags" to mapOf(
+            "fa" to "برچسب‌های استراتژی:",
+            "en" to "Strategy Tags:",
+            "ar" to "وسوم الاستراتيجية:"
+        ),
+        "checklist_confirmed" to mapOf(
+            "fa" to "چک‌لیست تایید شده قبل از ورود",
+            "en" to "Checklist Confirmed Before Entry",
+            "ar" to "قائمة التحقق المؤكدة قبل الدخول"
+        ),
+        "charts_gallery" to mapOf(
+            "fa" to "گالری چارت‌های موقعیت معاملاتی",
+            "en" to "Position Charts Gallery",
+            "ar" to "معرض مخططات المركز"
+        ),
+        "zoom_in" to mapOf(
+            "fa" to "بزرگ‌نمایی",
+            "en" to "Zoom In",
+            "ar" to "تكبير"
+        ),
+        "share_pdf" to mapOf(
+            "fa" to "تولید PDF و اشتراک‌گذاری / چاپ گزارش",
+            "en" to "Generate PDF, Share & Print",
+            "ar" to "إنشاء PDF ومشاركة / طباعة التقرير"
+        ),
+        "edit_review_title" to mapOf(
+            "fa" to "ویرایش بررسی معامله",
+            "en" to "Edit Trade Review",
+            "ar" to "تعديل مراجعة الصفقة"
+        ),
+        "edit_review_placeholder" to mapOf(
+            "fa" to "مثلا: در این معامله طمع کردم و زود خارج شدم. ریسک به ریوارد مناسب رعایت شد...",
+            "en" to "e.g., I got greedy in this trade and exited early. Proper risk-to-reward was maintained...",
+            "ar" to "مثلاً: كنت جشعاً في هذه الصفقة وخرجت مبكراً. تم الحفاظ على نسبة المخاطرة إلى العائد المناسبة..."
+        ),
+        "save_note" to mapOf(
+            "fa" to "ثبت یادداشت",
+            "en" to "Save Note",
+            "ar" to "حفظ الملاحظة"
+        ),
+        "delete_confirm_desc" to mapOf(
+            "fa" to "آیا از حذف کامل این معامله از دفترچه ژورنال خود مطمئن هستید؟ این عمل غیرقابل بازگشت است.",
+            "en" to "Are you sure you want to permanently delete this trade from your journal? This action is irreversible.",
+            "ar" to "هل أنت متأكد من حذف هذه الصفقة نهائياً من دفتر يومياتك؟ هذا الإجراء لا يمكن التراجع عنه."
+        ),
+        "yes_delete" to mapOf(
+            "fa" to "بله، حذف شود",
+            "en" to "Yes, Delete",
+            "ar" to "نعم، احذف"
+        ),
+        "zoom_instructions" to mapOf(
+            "fa" to "با دو انگشت بکشید تا بزرگ‌نمایی شود.",
+            "en" to "Pinch with two fingers to zoom.",
+            "ar" to "اقرص بإصبعين للتكبير."
+        ),
+        "trade_details_title" to mapOf(
+            "fa" to "جزئیات معامله",
+            "en" to "Trade Details",
+            "ar" to "تفاصيل الصفقة"
+        ),
+        "trade_type" to mapOf(
+            "fa" to "نوع معامله:",
+            "en" to "Trade Type:",
+            "ar" to "نوع الصفقة:"
+        ),
+        "open_position" to mapOf(
+            "fa" to "تعیین نشده (موقعیت باز)",
+            "en" to "Not specified (Open Position)",
+            "ar" to "غير محدد (مركز مفتوح)"
+        ),
+        "trade_time" to mapOf(
+            "fa" to "زمان ثبت معامله:",
+            "en" to "Trade Time:",
+            "ar" to "وقت الصفقة:"
+        ),
+        "trading_strategy" to mapOf(
+            "fa" to "استراتژی معاملاتی:",
+            "en" to "Trading Strategy:",
+            "ar" to "استراتيجية التداول:"
+        ),
+        "grade_label" to mapOf(
+            "fa" to "امتیاز موقعیت (Grade):",
+            "en" to "Setup Grade:",
+            "ar" to "تقييم الصفقة:"
+        ),
+        "chart_before_entry" to mapOf(
+            "fa" to "چارت تحلیل قبل از ورود",
+            "en" to "Before Entry Analysis Chart",
+            "ar" to "مخطط تحليل ما قبل الدخول"
+        ),
+        "chart_entry_point" to mapOf(
+            "fa" to "چارت نقطه ورود و تاییدیه",
+            "en" to "Entry Point & Confirmation Chart",
+            "ar" to "مخطط نقطة الدخول والتأكيد"
+        ),
+        "chart_exit_point" to mapOf(
+            "fa" to "چارت نقطه خروج و فرجام",
+            "en" to "Exit Point & Outcome Chart",
+            "ar" to "مخطط نقطة الخروج والنتيجة"
+        ),
+        "chart_supplementary" to mapOf(
+            "fa" to "تصویر تکمیلی چارت",
+            "en" to "Supplementary Chart Image",
+            "ar" to "صورة المخطط التكميلية"
+        ),
+        "edit" to mapOf(
+            "fa" to "ویرایش",
+            "en" to "Edit",
+            "ar" to "تعديل"
+        ),
+        "empty_review" to mapOf(
+            "fa" to "هیچ یادداشت و درسی بعد از بسته شدن معامله اضافه نشده است. برای افزودن روی دکمه ادیت بالا بزنید.",
+            "en" to "No notes or lessons have been added after closing this trade. Click the edit button above to add some.",
+            "ar" to "لم يتم إضافة أي ملاحظات أو دروس بعد إغلاق هذه الصفقة. انقر فوق زر التعديل أعلاه لإضافة بعضها."
+        ),
+        "generate_pdf_print" to mapOf(
+            "fa" to "تولید PDF و اشتراک‌گذاری / چاپ گزارش",
+            "en" to "Generate PDF, Share & Print Report",
+            "ar" to "إنشاء ملف PDF ومشاركة / طباعة التقرير"
+        ),
+        "pdf_desc" to mapOf(
+            "fa" to "دریافت فایل فرمت شده آماده اشتراک‌گذاری یا چاپ نمودار",
+            "en" to "Get a formatted file ready for sharing or printing charts",
+            "ar" to "احصل على ملف منسق جاهز للمشاركة أو طباعة المخططات"
+        ),
+        "share_print_title" to mapOf(
+            "fa" to "اشتراک‌گذاری و چاپ گزارش معامله",
+            "en" to "Share & Print Trade Report",
+            "ar" to "مشاركة وطباعة تقرير الصفقة"
+        ),
+        "pdf_error" to mapOf(
+            "fa" to "خطا در تولید فایل PDF",
+            "en" to "Error generating PDF file",
+            "ar" to "خطأ في إنشاء ملف PDF"
+        ),
+        "review_saved" to mapOf(
+            "fa" to "بررسی ثبت شد",
+            "en" to "Review successfully saved",
+            "ar" to "تم حفظ المراجعة بنجاح"
         )
     )
 }

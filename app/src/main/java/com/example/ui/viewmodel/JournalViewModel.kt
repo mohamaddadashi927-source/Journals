@@ -666,58 +666,114 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // CSV Export
+    // Beautiful Excel Styled Export
     suspend fun exportCsvFile(): Uri? = withContext(Dispatchers.IO) {
         val context = getApplication<Application>()
         try {
             val dbTrades = repository.allTrades.first()
-            val backupDir = File(context.cacheDir, "csv_exports")
+            val backupDir = File(context.cacheDir, "excel_exports")
             backupDir.mkdirs()
-            val file = File(backupDir, "trades_export.csv")
+            val file = File(backupDir, "trades_journal_export.xls")
             
-            FileWriter(file).use { writer ->
-                // Write CSV UTF-8 BOM so Persian characters display correctly in Excel
-                writer.write("\uFEFF")
-                // Tell Excel to use comma as separator
-                writer.write("sep=,\n")
-                // Headers (Removed Fees)
-                writer.write("شناسه معامله,نوع معامله,بازار,حجم,قیمت ورود,قیمت خروج,سود و زیان,وضعیت معامله,تاریخ,دلایل ورود,استراتژی (تگ‌ها),یادداشت تفصیلی\n")
-                
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                for (t in dbTrades) {
-                    val pnlStr = if (t.pnl != null) String.format(Locale.US, "%.4f", t.pnl) else "باز"
-                    val dateStr = sdf.format(Date(t.dateTime))
+            java.io.FileOutputStream(file).use { fos ->
+                java.io.OutputStreamWriter(fos, "UTF-8").use { writer ->
+                    // Excel-compatible HTML Template with proper borders, widths, colors, and gridlines
+                    writer.write("<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n")
+                    writer.write("<head>\n")
+                    writer.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n")
+                    writer.write("<!--[if gte mso 9]>\n")
+                    writer.write("<xml>\n")
+                    writer.write(" <x:ExcelWorkbook>\n")
+                    writer.write("  <x:ExcelWorksheets>\n")
+                    writer.write("   <x:ExcelWorksheet>\n")
+                    writer.write("    <x:Name>Journal Trades</x:Name>\n")
+                    writer.write("    <x:WorksheetOptions>\n")
+                    writer.write("     <x:DisplayGridlines/>\n")
+                    writer.write("    </x:WorksheetOptions>\n")
+                    writer.write("   </x:ExcelWorksheet>\n")
+                    writer.write("  </x:ExcelWorksheets>\n")
+                    writer.write(" </x:ExcelWorkbook>\n")
+                    writer.write("</xml>\n")
+                    writer.write("<![endif]-->\n")
+                    writer.write("<style>\n")
+                    writer.write("  body { font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif; }\n")
+                    writer.write("  table { border-collapse: collapse; width: 100%; direction: rtl; }\n")
+                    writer.write("  th { background-color: #1E3A8A; color: #FFFFFF; font-weight: bold; border: 1px solid #111827; padding: 12px 10px; font-size: 13px; text-align: center; }\n")
+                    writer.write("  td { border: 1px solid #D1D5DB; padding: 10px 8px; font-size: 12px; text-align: center; vertical-align: middle; }\n")
+                    writer.write("  .win-bg { background-color: #DCFCE7; color: #15803D; font-weight: bold; }\n")
+                    writer.write("  .loss-bg { background-color: #FEE2E2; color: #B91C1C; font-weight: bold; }\n")
+                    writer.write("  .open-bg { background-color: #EFF6FF; color: #1D4ED8; font-weight: bold; }\n")
+                    writer.write("  .buy-side { color: #16A34A; font-weight: bold; }\n")
+                    writer.write("  .sell-side { color: #DC2626; font-weight: bold; }\n")
+                    writer.write("  .notes-cell { text-align: right; white-space: normal; }\n")
+                    writer.write("  .header-title { font-size: 18px; font-weight: bold; color: #1E3A8A; padding: 15px 0px; text-align: center; }\n")
+                    writer.write("</style>\n")
+                    writer.write("</head>\n")
+                    writer.write("<body>\n")
+                    writer.write("  <div class=\"header-title\">گزارش جامع دفترچه ژورنال معاملاتی حرفه‌ای</div>\n")
+                    writer.write("  <table>\n")
+                    writer.write("    <tr>\n")
+                    writer.write("      <th>شناسه معامله</th>\n")
+                    writer.write("      <th>نوع معامله</th>\n")
+                    writer.write("      <th>نماد / بازار</th>\n")
+                    writer.write("      <th>حجم</th>\n")
+                    writer.write("      <th>قیمت ورود</th>\n")
+                    writer.write("      <th>قیمت خروج</th>\n")
+                    writer.write("      <th>سود و زیان</th>\n")
+                    writer.write("      <th>وضعیت</th>\n")
+                    writer.write("      <th>تاریخ و ساعت</th>\n")
+                    writer.write("      <th>دلایل ورود و تحلیل</th>\n")
+                    writer.write("      <th>استراتژی (تگ‌ها)</th>\n")
+                    writer.write("      <th>یادداشت‌های بررسی معامله</th>\n")
+                    writer.write("    </tr>\n")
                     
-                    fun escape(v: String?): String {
-                        if (v == null) return "\"\""
-                        // Escape double quotes by doubling them, replace newlines with space, and wrap in quotes
-                        val clean = v.replace("\"", "\"\"").replace("\n", " ")
-                        return "\"$clean\""
-                    }
-                    
-                    val sideStr = if (t.side == "BUY" || t.side == "خرید") "خرید" else "فروش"
-                    val statusStr = when (t.status) {
-                        "WIN" -> "برد (WIN)"
-                        "LOSS" -> "باخت (LOSS)"
-                        else -> "موقعیت باز (OPEN)"
+                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                    fun escapeHtml(v: String?): String {
+                        if (v == null) return ""
+                        return v.replace("&", "&amp;")
+                            .replace("<", "&lt;")
+                            .replace(">", "&gt;")
+                            .replace("\"", "&quot;")
+                            .replace("\n", "<br/>")
                     }
 
-                    val rowFields = listOf(
-                        t.id.toString(),
-                        escape(sideStr),
-                        escape(t.market),
-                        String.format(Locale.US, "%.8f", t.volume),
-                        String.format(Locale.US, "%.8f", t.entryPrice),
-                        if (t.exitPrice != null) String.format(Locale.US, "%.8f", t.exitPrice) else "",
-                        pnlStr,
-                        escape(statusStr),
-                        escape(dateStr),
-                        escape(t.reason),
-                        escape(t.tags),
-                        escape(t.postTradeNotes)
-                    )
+                    for (t in dbTrades) {
+                        val pnlStr = if (t.pnl != null) String.format(Locale.US, "%.4f", t.pnl) else "باز"
+                        val dateStr = sdf.format(Date(t.dateTime))
+                        
+                        val sideClass = if (t.side == "BUY" || t.side == "خرید") "buy-side" else "sell-side"
+                        val sideText = if (t.side == "BUY" || t.side == "خرید") "خرید (BUY)" else "فروش (SELL)"
+                        
+                        val statusClass = when (t.status) {
+                            "WIN" -> "win-bg"
+                            "LOSS" -> "loss-bg"
+                            else -> "open-bg"
+                        }
+                        val statusText = when (t.status) {
+                            "WIN" -> "برد (WIN)"
+                            "LOSS" -> "باخت (LOSS)"
+                            else -> "موقعیت باز"
+                        }
+
+                        writer.write("    <tr>\n")
+                        writer.write("      <td>${t.id}</td>\n")
+                        writer.write("      <td class=\"$sideClass\">$sideText</td>\n")
+                        writer.write("      <td><strong>${escapeHtml(t.market)}</strong></td>\n")
+                        writer.write("      <td>${String.format(Locale.US, "%.8f", t.volume)}</td>\n")
+                        writer.write("      <td>${String.format(Locale.US, "%.8f", t.entryPrice)}</td>\n")
+                        writer.write("      <td>${if (t.exitPrice != null) String.format(Locale.US, "%.8f", t.exitPrice) else ""}</td>\n")
+                        writer.write("      <td class=\"$statusClass\">$pnlStr</td>\n")
+                        writer.write("      <td class=\"$statusClass\">$statusText</td>\n")
+                        writer.write("      <td>$dateStr</td>\n")
+                        writer.write("      <td class=\"notes-cell\">${escapeHtml(t.reason)}</td>\n")
+                        writer.write("      <td>${escapeHtml(t.tags)}</td>\n")
+                        writer.write("      <td class=\"notes-cell\">${escapeHtml(t.postTradeNotes)}</td>\n")
+                        writer.write("    </tr>\n")
+                    }
                     
-                    writer.write(rowFields.joinToString(",") + "\n")
+                    writer.write("  </table>\n")
+                    writer.write("</body>\n")
+                    writer.write("</html>\n")
                 }
             }
 

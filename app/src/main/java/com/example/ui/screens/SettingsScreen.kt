@@ -329,7 +329,7 @@ fun SettingsScreen(
                                 coroutineScope.launch {
                                     val uri = viewModel.exportCsvFile()
                                     if (uri != null) {
-                                        shareFile(uri, "text/csv", if (language == "fa") "خروجی اکسل ژورنال" else if (language == "ar") "تصدير السجل إلى إكسل" else "Excel Journal Export")
+                                        shareFile(uri, "application/vnd.ms-excel", if (language == "fa") "خروجی اکسل ژورنال" else if (language == "ar") "تصدير السجل إلى إكسل" else "Excel Journal Export")
                                     } else {
                                         val err = if (language == "fa") "خطا در تولید خروجی اکسل" else if (language == "ar") "فشل إنشاء ملف إكسل" else "Error generating Excel CSV"
                                         Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
