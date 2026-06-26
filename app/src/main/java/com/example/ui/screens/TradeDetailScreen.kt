@@ -245,7 +245,7 @@ fun TradeDetailScreen(
                             DetailRow(label = "حجم معامله:", value = trade.volume.toString())
                             DetailRow(label = "قیمت ورود:", value = String.format(Locale.US, "%,.4f", trade.entryPrice))
                             DetailRow(label = "قیمت خروج:", value = if (isClosed) String.format(Locale.US, "%,.4f", trade.exitPrice) else "تعیین نشده (موقعیت باز)")
-                            DetailRow(label = "کارمزد پرداخت شده:", value = "${trade.fees} $currencySymbol")
+
                             DetailRow(label = "زمان ثبت معامله:", value = sdf.format(Date(trade.dateTime)))
                         }
                     }

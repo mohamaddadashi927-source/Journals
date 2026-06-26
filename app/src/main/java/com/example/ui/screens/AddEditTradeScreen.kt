@@ -343,29 +343,15 @@ fun AddEditTradeScreen(
                     )
                 }
 
-                // 4. Exit Price and Fees Row
-                Row(
+                // 4. Exit Price
+                OutlinedTextField(
+                    value = exitPriceStr,
+                    onValueChange = { exitPriceStr = it },
+                    label = { Text("قیمت خروج (اختیاری)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = exitPriceStr,
-                        onValueChange = { exitPriceStr = it },
-                        label = { Text("قیمت خروج (اختیاری)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = feesStr,
-                        onValueChange = { feesStr = it },
-                        label = { Text("کارمزد") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
+                    shape = RoundedCornerShape(12.dp)
+                )
 
                 // Manual PnL Entry Section (Visible when exitPriceStr is not empty)
                 AnimatedVisibility(
@@ -557,54 +543,11 @@ fun AddEditTradeScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
 
                     Text(
-                        "دلایل ورود و یادداشت تفصیلی (با امکان قالب‌بندی متنی)",
+                        "دلایل ورود و یادداشت تفصیلی",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-
-                    // Formatting Toolbar row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        val formats = listOf(
-                            Triple("B", "**", "**"),   // Bold
-                            Triple("I", "*", "*"),     // Italic
-                            Triple("لیست", "- ", ""),  // List
-                            Triple("نقل", "> ", ""),   // Quote
-                            Triple("کد", "`", "`")      // Code
-                        )
-                        formats.forEach { (label, prefix, suffix) ->
-                            FilledTonalButton(
-                                onClick = {
-                                    val text = richNotesValue.text
-                                    val selection = richNotesValue.selection
-                                    val selectedText = text.substring(selection.start, selection.end)
-                                    val replacement = "$prefix$selectedText$suffix"
-                                    val newText = text.replaceRange(selection.start, selection.end, replacement)
-                                    val newSelectionStart = selection.start + prefix.length
-                                    val newSelectionEnd = newSelectionStart + selectedText.length
-                                    richNotesValue = TextFieldValue(
-                                        text = newText,
-                                        selection = TextRange(newSelectionStart, newSelectionEnd)
-                                    )
-                                },
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                                modifier = Modifier.height(30.dp),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
 
                     // Rich notes TextField
                     OutlinedTextField(

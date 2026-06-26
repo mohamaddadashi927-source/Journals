@@ -155,8 +155,8 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             0.0
         }
 
-        val maxProfit = closedTrades.maxOfOrNull { it.pnl ?: 0.0 } ?: 0.0
-        val maxLoss = closedTrades.minOfOrNull { it.pnl ?: 0.0 } ?: 0.0
+        val maxProfit = closedTrades.filter { (it.pnl ?: 0.0) > 0.0 }.maxOfOrNull { it.pnl ?: 0.0 } ?: 0.0
+        val maxLoss = closedTrades.filter { (it.pnl ?: 0.0) < 0.0 }.minOfOrNull { it.pnl ?: 0.0 } ?: 0.0
 
         TradeStats(
             totalPnL = totalPnL,

@@ -264,9 +264,11 @@ object PdfExportHelper {
             canvas.drawText("حجم معامله", 539f, currentY + 63f, qLabelPaint)
             canvas.drawText("${String.format(Locale.US, "%,.6f", trade.volume)}", 539f, currentY + 81f, qValuePaint)
 
-            // Bottom Left: Fees
-            canvas.drawText("کارمزد تراکنش", 277.5f, currentY + 63f, qLabelPaint)
-            canvas.drawText("${String.format(Locale.US, "%,.2f", trade.fees)} $currencySymbol", 277.5f, currentY + 81f, qValuePaint)
+            // Bottom Left: Date
+            val sdfPdf = SimpleDateFormat("yyyy/MM/dd", Locale.US)
+            val tradeDateStr = sdfPdf.format(java.util.Date(trade.dateTime))
+            canvas.drawText("تاریخ معامله", 277.5f, currentY + 63f, qLabelPaint)
+            canvas.drawText(tradeDateStr, 277.5f, currentY + 81f, qValuePaint)
 
             currentY += 105f
 

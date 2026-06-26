@@ -98,13 +98,13 @@ fun EquityCurveChart(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = Loc.tr("chart_title", lang),
+                        text = Loc.tr("current_balance", lang),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${if (totalPnL >= 0) "+" else ""}${String.format(Locale.US, "%,.2f", totalPnL)} $currencySymbol",
+                        text = "${String.format(Locale.US, "%,.2f", initialBalance + totalPnL)} $currencySymbol",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = chartLineColor
@@ -143,12 +143,13 @@ fun EquityCurveChart(
                     val baselineY = if (range == 0.0) height / 2f else {
                         (height * 0.85f - (initialBalance - minEquity) * verticalScale).toFloat()
                     }
-                    val zeroY = baselineY
+                    val zeroY = height
                     drawLine(
-                        color = Color.Gray.copy(alpha = 0.35f),
+                        color = Color.Gray.copy(alpha = 0.25f),
                         start = Offset(0f, baselineY),
                         end = Offset(width, baselineY),
-                        strokeWidth = 1.5.dp.toPx()
+                        strokeWidth = 1.2.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
                     )
 
                     // Compute points coordinates
