@@ -339,6 +339,106 @@ object Loc {
             "fa" to "سود/زیان معامله",
             "en" to "Trade P&L",
             "ar" to "ربح/خسارة الصفقة"
+        ),
+        "journal_book" to mapOf(
+            "fa" to "دفترچه معاملات",
+            "en" to "Trading Journal",
+            "ar" to "دفتر الصفقات"
+        ),
+        "advanced_filter" to mapOf(
+            "fa" to "فیلتر پیشرفته",
+            "en" to "Advanced Filter",
+            "ar" to "تصفية متقدمة"
+        ),
+        "search_placeholder_adv" to mapOf(
+            "fa" to "جستجو در نماد، یادداشت‌ها، تگ‌ها...",
+            "en" to "Search symbols, notes, tags...",
+            "ar" to "البحث في الرموز، الملاحظات، الوسوم..."
+        ),
+        "sort_order" to mapOf(
+            "fa" to "مرتب‌سازی",
+            "en" to "Sort Order",
+            "ar" to "الترتيب"
+        ),
+        "sort_date_desc_text" to mapOf(
+            "fa" to "تاریخ (جدید به قدیم)",
+            "en" to "Date (New to Old)",
+            "ar" to "التاريخ (الأحدث للأقدم)"
+        ),
+        "sort_date_asc_text" to mapOf(
+            "fa" to "تاریخ (قدیم به جدید)",
+            "en" to "Date (Old to New)",
+            "ar" to "التاريخ (الأقدم للأحدث)"
+        ),
+        "sort_pnl_desc_text" to mapOf(
+            "fa" to "سود (بیشترین به کمترین)",
+            "en" to "PnL (High to Low)",
+            "ar" to "الربح (من الأعلى للأقل)"
+        ),
+        "sort_pnl_asc_text" to mapOf(
+            "fa" to "سود (کمترین به بیشترین)",
+            "en" to "PnL (Low to High)",
+            "ar" to "الربح (من الأقل للأعلى)"
+        ),
+        "advanced_filter_panel" to mapOf(
+            "fa" to "فیلترهای پیشرفته معامله",
+            "en" to "Advanced Trade Filters",
+            "ar" to "تصفية الصفقات المتقدمة"
+        ),
+        "clear_all" to mapOf(
+            "fa" to "پاک کردن همه",
+            "en" to "Clear All",
+            "ar" to "مسح الكل"
+        ),
+        "trade_status" to mapOf(
+            "fa" to "وضعیت معامله:",
+            "en" to "Trade Status:",
+            "ar" to "حالة الصفقة:"
+        ),
+        "win_status" to mapOf(
+            "fa" to "برد (WIN)",
+            "en" to "WIN",
+            "ar" to "ربح (WIN)"
+        ),
+        "loss_status" to mapOf(
+            "fa" to "باخت (LOSS)",
+            "en" to "LOSS",
+            "ar" to "خسارة (LOSS)"
+        ),
+        "open_status" to mapOf(
+            "fa" to "موقعیت‌های باز",
+            "en" to "Open Trades",
+            "ar" to "الصفقات المفتوحة"
+        ),
+        "markets_filter" to mapOf(
+            "fa" to "فیلتر بازارها:",
+            "en" to "Filter Markets:",
+            "ar" to "تصفية الأسواق:"
+        ),
+        "tags_filter" to mapOf(
+            "fa" to "بر اساس استراتژی (برچسب):",
+            "en" to "By Strategy (Tag):",
+            "ar" to "حسب الاستراتيجية (الوسم):"
+        ),
+        "date_range" to mapOf(
+            "fa" to "بازه زمانی معاملات:",
+            "en" to "Trade Date Range:",
+            "ar" to "النطاق الزمني للصفقات:"
+        ),
+        "start_date" to mapOf(
+            "fa" to "تاریخ شروع",
+            "en" to "Start Date",
+            "ar" to "تاريخ البدء"
+        ),
+        "end_date" to mapOf(
+            "fa" to "تاریخ پایان",
+            "en" to "End Date",
+            "ar" to "تاريخ الانتهاء"
+        ),
+        "no_trades_match" to mapOf(
+            "fa" to "هیچ معامله‌ای با این مشخصات یافت نشد.",
+            "en" to "No trades found matching this criteria.",
+            "ar" to "لم يتم العثور على صفقات تطابق هذه المعايير."
         )
     )
 }

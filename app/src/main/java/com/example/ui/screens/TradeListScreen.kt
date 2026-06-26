@@ -28,6 +28,7 @@ import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.OpenBlue
 import com.example.ui.viewmodel.JournalViewModel
 import com.example.ui.viewmodel.SortType
+import com.example.ui.util.Loc
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -52,6 +53,7 @@ fun TradeListScreen(
     val currency by viewModel.currency.collectAsState()
     val markets by viewModel.allMarkets.collectAsState()
     val tags by viewModel.allTags.collectAsState()
+    val language by viewModel.language.collectAsState()
 
     var showFiltersPanel by remember { mutableStateOf(false) }
 
@@ -63,23 +65,25 @@ fun TradeListScreen(
 
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
+
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
-                        Text("دفترچه معاملات (Journal)", fontWeight = FontWeight.Bold)
+                        Text(Loc.tr("journal_book", language), fontWeight = FontWeight.Bold)
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "بازگشت")
+                            Icon(Icons.Default.ArrowBack, contentDescription = Loc.tr("back", language))
                         }
                     },
                     actions = {
                         IconButton(onClick = { showFiltersPanel = !showFiltersPanel }) {
                             Icon(
                                 imageVector = if (showFiltersPanel) Icons.Default.FilterListOff else Icons.Default.FilterList,
-                                contentDescription = "فیلتر پیشرفته",
+                                contentDescription = Loc.tr("advanced_filter", language),
                                 tint = if (selectedMarket != null || selectedStatus != null || selectedTags.isNotEmpty() || startDate != null || endDate != null) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
@@ -111,12 +115,12 @@ fun TradeListScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.searchQuery.value = it },
-                        placeholder = { Text("جستجو در نماد، دلایل، برچسب‌ها...", fontSize = 12.sp) },
+                        placeholder = { Text(Loc.tr("search_placeholder_adv", language), fontSize = 12.sp) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "پاک کردن", modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Clear, contentDescription = Loc.tr("clear_all", language), modifier = Modifier.size(16.dp))
                                 }
                             }
                         },
@@ -139,7 +143,7 @@ fun TradeListScreen(
                                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
                                 .size(56.dp)
                         ) {
-                            Icon(Icons.Default.Sort, contentDescription = "مرتب‌سازی")
+                            Icon(Icons.Default.Sort, contentDescription = Loc.tr("sort_order", language))
                         }
 
                         DropdownMenu(
@@ -147,7 +151,7 @@ fun TradeListScreen(
                             onDismissRequest = { sortMenuExpanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("تاریخ (جدید به قدیم)") },
+                                text = { Text(Loc.tr("sort_date_desc_text", language)) },
                                 leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_DESC
@@ -155,7 +159,7 @@ fun TradeListScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("تاریخ (قدیم به جدید)") },
+                                text = { Text(Loc.tr("sort_date_asc_text", language)) },
                                 leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_ASC
@@ -163,7 +167,7 @@ fun TradeListScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("سود (بیشترین به کمترین)") },
+                                text = { Text(Loc.tr("sort_pnl_desc_text", language)) },
                                 leadingIcon = { Icon(Icons.Default.TrendingUp, contentDescription = null, tint = EmeraldGreen) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_DESC
@@ -171,7 +175,7 @@ fun TradeListScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("سود (کمترین به بیشترین)") },
+                                text = { Text(Loc.tr("sort_pnl_asc_text", language)) },
                                 leadingIcon = { Icon(Icons.Default.TrendingDown, contentDescription = null, tint = CrimsonRed) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_ASC
@@ -212,18 +216,18 @@ fun TradeListScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("فیلترهای پیشرفته معامله", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(Loc.tr("advanced_filter_panel", language), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 TextButton(onClick = { viewModel.resetFilters() }) {
-                                    Text("پاک کردن همه", fontSize = 12.sp)
+                                    Text(Loc.tr("clear_all", language), fontSize = 12.sp)
                                 }
                             }
 
                             // A. Status filter chips
                             Column {
-                                Text("وضعیت معامله:", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                Text(Loc.tr("trade_status", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf("WIN" to "برد (WIN)", "LOSS" to "باخت (LOSS)", "OPEN" to "موقعیت‌های باز").forEach { pair ->
+                                    listOf("WIN" to Loc.tr("win_status", language), "LOSS" to Loc.tr("loss_status", language), "OPEN" to Loc.tr("open_status", language)).forEach { pair ->
                                         val isSelected = selectedStatus == pair.first
                                         FilterChip(
                                             selected = isSelected,
@@ -239,7 +243,7 @@ fun TradeListScreen(
 
                             // B. Market selection filter chips
                             Column {
-                                Text("فیلتر بازارها:", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                Text(Loc.tr("markets_filter", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -262,7 +266,7 @@ fun TradeListScreen(
                             // C. Strategy tag filter chips
                             if (tags.isNotEmpty()) {
                                 Column {
-                                    Text("بر اساس استراتژی (برچسب):", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                    Text(Loc.tr("tags_filter", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                     Spacer(modifier = Modifier.height(6.dp))
                                     FlowRow(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -287,7 +291,7 @@ fun TradeListScreen(
 
                             // D. Date Range Selection
                             Column {
-                                Text("بازه زمانی معاملات:", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                Text(Loc.tr("date_range", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -313,7 +317,12 @@ fun TradeListScreen(
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
-                                            text = if (startDate != null) "از: ${sdf.format(Date(startDate!!))}" else "تاریخ شروع",
+                                            text = if (startDate != null) {
+                                                val prefix = if (language == "fa") "از: " else if (language == "ar") "من: " else "From: "
+                                                "$prefix${sdf.format(Date(startDate!!))}"
+                                            } else {
+                                                Loc.tr("start_date", language)
+                                            },
                                             fontSize = 11.sp
                                         )
                                     }
@@ -338,7 +347,12 @@ fun TradeListScreen(
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
-                                            text = if (endDate != null) "تا: ${sdf.format(Date(endDate!!))}" else "تاریخ پایان",
+                                            text = if (endDate != null) {
+                                                val prefix = if (language == "fa") "تا: " else if (language == "ar") "إلى: " else "To: "
+                                                "$prefix${sdf.format(Date(endDate!!))}"
+                                            } else {
+                                                Loc.tr("end_date", language)
+                                            },
                                             fontSize = 11.sp
                                         )
                                     }
@@ -367,7 +381,7 @@ fun TradeListScreen(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             )
                             Text(
-                                "هیچ معامله‌ای با این مشخصات یافت نشد.",
+                                Loc.tr("no_trades_match", language),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
@@ -385,6 +399,7 @@ fun TradeListScreen(
                             TradeItemRow(
                                 trade = trade,
                                 currencySymbol = currencySymbol,
+                                lang = language,
                                 onClick = { onNavigateToTradeDetail(trade.id) }
                             )
                         }
