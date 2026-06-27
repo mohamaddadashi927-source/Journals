@@ -59,6 +59,7 @@ fun SettingsScreen(
     var showTagsDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     var showBalanceEditDialog by remember { mutableStateOf(false) }
+    var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
 
     // Text inputs for inline lists additions
     var newMarketInput by remember { mutableStateOf("") }
@@ -69,14 +70,7 @@ fun SettingsScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            coroutineScope.launch {
-                val success = viewModel.restoreBackup(uri)
-                if (success) {
-                    Toast.makeText(context, "دیتا با موفقیت بازیابی شد.", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "خطا در بازیابی اطلاعات بک‌آپ. لطفاً فایل معتبر انتخاب کنید.", Toast.LENGTH_LONG).show()
-                }
-            }
+            pendingRestoreUri = uri
         }
     }
 
@@ -597,6 +591,51 @@ fun SettingsScreen(
                     TextButton(onClick = { showResetDialog = false }) {
                         Text(Loc.tr("cancel", language))
                     }
+                }
+            )
+        }
+
+        // Restore Confirmation Dialog
+        if (pendingRestoreUri != null) {
+            AlertDialog(
+                onDismissRequest = { pendingRestoreUri = null },
+                confirmButton = {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = CrimsonRed),
+                        onClick = {
+                            val uriToRestore = pendingRestoreUri
+                            pendingRestoreUri = null
+                            if (uriToRestore != null) {
+                                coroutineScope.launch {
+                                    val success = viewModel.restoreBackup(uriToRestore)
+                                    if (success) {
+                                        val msg = if (language == "fa") "دیتا با موفقیت بازیابی شد." else if (language == "ar") "تمت استعادة البيانات بنجاح." else "Backup restored successfully."
+                                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                    } else {
+                                        val msg = if (language == "fa") "خطا در بازیابی بک‌آپ. لطفاً فایل معتبر انتخاب کنید." else if (language == "ar") "خطأ في استعادة النسخة الاحتياطية." else "Error restoring backup. Please select a valid file."
+                                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Text(if (language == "fa") "تایید و جایگزینی" else if (language == "ar") "تأكيد واستبدال" else "Confirm & Replace")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingRestoreUri = null }) {
+                        Text(if (language == "fa") "انصراف" else if (language == "ar") "إلغاء" else "Cancel")
+                    }
+                },
+                title = {
+                    Text(if (language == "fa") "هشدار بازیابی اطلاعات" else if (language == "ar") "تأكيد استعادة البيانات" else "Restore Confirmation", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Text(
+                        if (language == "fa") "آیا مطمئن هستید؟ با بازیابی این بک‌آپ، تمام اطلاعات فعلی ژورنال پاک شده و اطلاعات فایل بک‌آپ جایگزین آن خواهد شد. این عملیات غیرقابل بازگشت است."
+                        else if (language == "ar") "هل أنت متأكد؟ عند استعادة هذه النسخة الاحتياطية، سيتم مسح جميع بيانات السجل الحالية واستبدالها ببيانات الملف. هذا الإجراء لا يمكن التراجع عنه."
+                        else "Are you sure you want to restore? This will completely replace your current database records with the backup file's contents. This action is irreversible."
+                    )
                 }
             )
         }

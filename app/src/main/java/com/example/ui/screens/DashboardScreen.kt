@@ -59,8 +59,10 @@ fun DashboardScreen(
     val initialBalance by viewModel.initialBalance.collectAsState()
     val accountName by viewModel.accountName.collectAsState()
     val isAccountInitialized by viewModel.isAccountInitialized.collectAsState()
+    val allJournals by viewModel.allDailyJournals.collectAsState()
 
     var activeTab by remember { mutableStateOf(0) } // 0: Dashboard, 1: Calendar, 2: Analysis, 3: Journal, 4: Goals
+    var showDailyReviewDialog by remember { mutableStateOf(false) }
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -266,6 +268,17 @@ fun DashboardScreen(
                                 )
                             }
 
+                            // Daily Review Mode Trigger Card
+                            item {
+                                DailyReviewTriggerCard(
+                                    trades = trades,
+                                    journals = allJournals,
+                                    lang = language,
+                                    currencySymbol = currencySymbol,
+                                    onClick = { showDailyReviewDialog = true }
+                                )
+                            }
+
                             // Stats Grid
                             item {
                                 Row(
@@ -354,6 +367,16 @@ fun DashboardScreen(
                     4 -> GoalsTab(viewModel)
                 }
             }
+        }
+
+        if (showDailyReviewDialog) {
+            DailyReviewDialog(
+                trades = trades,
+                journals = allJournals,
+                lang = language,
+                currencySymbol = currencySymbol,
+                onDismiss = { showDailyReviewDialog = false }
+            )
         }
     }
 }
@@ -806,4 +829,289 @@ fun DashboardAiSummaryCard(viewModel: JournalViewModel, lang: String, onNavigate
             }
         }
     }
+}
+
+@Composable
+fun DailyReviewTriggerCard(
+    trades: List<Trade>,
+    journals: List<com.example.data.model.DailyJournal>,
+    lang: String,
+    currencySymbol: String,
+    onClick: () -> Unit
+) {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val todayStr = sdf.format(Date())
+    val todayTrades = trades.filter { t -> sdf.format(Date(t.dateTime)) == todayStr }
+    val todayClosed = todayTrades.filter { it.exitPrice != null }
+    val todayPnl = todayClosed.sumOf { it.pnl ?: 0.0 }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                RoundedCornerShape(16.dp)
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("📅", fontSize = 20.sp)
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (lang == "fa") "امروز در یک نگاه (Daily Review)" else "Daily Review Mode",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = if (lang == "fa") {
+                        if (todayTrades.isEmpty()) "هیچ تریدی امروز ثبت نشده. صبور باشید!"
+                        else "تعداد ${todayTrades.size} ترید با برآیند ${if (todayPnl >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", todayPnl)} $currencySymbol"
+                    } else {
+                        if (todayTrades.isEmpty()) "No trades logged today yet. Review strategy rules!"
+                        else "Logged ${todayTrades.size} trades with a net of ${if (todayPnl >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", todayPnl)} $currencySymbol"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.TrendingFlat,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun DailyReviewDialog(
+    trades: List<Trade>,
+    journals: List<com.example.data.model.DailyJournal>,
+    lang: String,
+    currencySymbol: String,
+    onDismiss: () -> Unit
+) {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val todayStr = sdf.format(Date())
+    
+    val todayTrades = trades.filter { t -> sdf.format(Date(t.dateTime)) == todayStr }
+    val todayClosed = todayTrades.filter { it.exitPrice != null }
+    val todayPnl = todayClosed.sumOf { it.pnl ?: 0.0 }
+    val todayWins = todayClosed.count { (it.pnl ?: 0.0) >= 0.0 }
+    val todayLosses = todayClosed.count { (it.pnl ?: 0.0) < 0.0 }
+    
+    val todayJournal = journals.find { it.dateString == todayStr }
+    val todayMistake = todayJournal?.mistakes?.ifEmpty { null } 
+        ?: if (todayTrades.size > 5) (if (lang == "fa") "بیش‌معاملاتی" else "Overtrading") else null
+    val todayEmotions = todayJournal?.emotions?.ifEmpty { null }
+        ?: todayTrades.map { it.emotionalState }.filter { it.isNotEmpty() }.distinct().joinToString(", ").ifEmpty { null }
+
+    val todayInsight = when {
+        todayTrades.isEmpty() -> if (lang == "fa") "امروز هیچ معامله‌ای انجام نداده‌اید. صبوری شما در انتظار فرصت طلایی عالی است." else "No trades completed today. Great patience waiting for prime setups."
+        todayPnl > 0.0 && todayLosses == 0 -> if (lang == "fa") "یک روز بی‌نقص! تمام معاملات امروز سودده بودند. پایبندی به استراتژی عالی بود." else "A flawless day! 100% of today's closed trades were in profit."
+        todayPnl > 0.0 -> if (lang == "fa") "روز موفقی بود. برآیند شما مثبت است. سودها را تثبیت کنید." else "Successful day! Your net performance is positive."
+        todayTrades.size > 5 -> if (lang == "fa") "هشدار بیش‌معاملاتی! تعداد تریدهای امروز بالا بود. خستگی ذهنی را جدی بگیرید." else "Overtrading detected! High transaction frequency increases mental fatigue."
+        todayLosses > todayWins -> if (lang == "fa") "روز سختی بود، اما ضررها بخشی از مسیر یادگیری هستند. آرامش خود را حفظ کنید." else "A challenging day, but losses are stepping stones. Review your entries tomorrow."
+        else -> if (lang == "fa") "روز معاملاتی متعادلی را سپری کردید. نتایج را در ژورنال ثبت کنید." else "A balanced trading day. Log your findings in your journal."
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(if (lang == "fa") "بستن" else "Close")
+            }
+        },
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("📅", fontSize = 24.sp)
+                Column {
+                    Text(
+                        text = if (lang == "fa") "خلاصه بازنگری روزانه" else "Daily Review Summary",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = todayStr,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val pnlColor = if (todayPnl >= 0.0) EmeraldGreen else CrimsonRed
+                val pnlSign = if (todayPnl >= 0.0) "+" else ""
+                
+                Surface(
+                    color = pnlColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (lang == "fa") "سود/زیان خالص امروز" else "Today's Net P/L",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = pnlColor
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "$pnlSign${String.format(Locale.US, "%,.2f", todayPnl)} $currencySymbol",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = pnlColor
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = if (lang == "fa") "کل معاملات" else "Total Trades",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "${todayTrades.size}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = if (lang == "fa") "برد / باخت" else "Win / Loss",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "$todayWins / $todayLosses",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = if (todayWins > todayLosses) EmeraldGreen else if (todayLosses > todayWins) CrimsonRed else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("💡", fontSize = 16.sp)
+                        Column {
+                            Text(
+                                text = if (lang == "fa") "بینش روزانه مربی" else "Coach Daily Insight",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = todayInsight,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
+
+                if (todayMistake != null || todayEmotions != null) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (todayMistake != null) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("⚠️", fontSize = 14.sp)
+                                Text(
+                                    text = "${if (lang == "fa") "خطای روز:" else "Mistake of the Day:"} $todayMistake",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = CrimsonRed
+                                )
+                            }
+                        }
+                        if (todayEmotions != null) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("🎭", fontSize = 14.sp)
+                                Text(
+                                    text = "${if (lang == "fa") "حالت روحی امروز:" else "Emotions logged:"} $todayEmotions",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
 }

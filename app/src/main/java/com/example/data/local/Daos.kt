@@ -40,6 +40,9 @@ interface MarketDao {
 
     @Delete
     suspend fun deleteMarket(market: Market)
+
+    @Query("DELETE FROM markets")
+    suspend fun deleteAllMarkets()
 }
 
 @Dao
@@ -55,6 +58,9 @@ interface TagDao {
 
     @Delete
     suspend fun deleteTag(tag: Tag)
+
+    @Query("DELETE FROM tags")
+    suspend fun deleteAllTags()
 }
 
 @Dao

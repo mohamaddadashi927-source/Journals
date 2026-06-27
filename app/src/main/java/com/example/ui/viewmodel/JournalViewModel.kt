@@ -505,82 +505,11 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             val dbMarkets = repository.allMarkets.first()
             val dbTags = repository.allTags.first()
             val dbJournals = dailyJournalDao.getAllDailyJournals().first()
+            val dbChecklist = checklistItemDao.getAllChecklistItems().first()
 
-            val rootObj = JSONObject()
-            
-            // Build Trades Array
-            val tradesArr = JSONArray()
-            for (t in dbTrades) {
-                val o = JSONObject().apply {
-                    put("id", t.id)
-                    put("side", t.side)
-                    put("market", t.market)
-                    put("volume", t.volume)
-                    put("entryPrice", t.entryPrice)
-                    put("exitPrice", t.exitPrice ?: JSONObject.NULL)
-                    put("dateTime", t.dateTime)
-                    put("fees", t.fees)
-                    put("reason", t.reason)
-                    put("imagePath", t.imagePath ?: JSONObject.NULL)
-                    put("imageBeforePath", t.imageBeforePath ?: JSONObject.NULL)
-                    put("imageEntryPath", t.imageEntryPath ?: JSONObject.NULL)
-                    put("imageExitPath", t.imageExitPath ?: JSONObject.NULL)
-                    put("tags", t.tags)
-                    put("strategy", t.strategy)
-                    put("grade", t.grade)
-                    put("checklistResults", t.checklistResults)
-                    put("postTradeNotes", t.postTradeNotes)
-                    put("richNotes", t.richNotes)
-                    put("emotionalState", t.emotionalState)
-                }
-                tradesArr.put(o)
-            }
-            rootObj.put("trades", tradesArr)
-
-            // Build Markets Array
-            val marketsArr = JSONArray()
-            for (m in dbMarkets) {
-                val o = JSONObject().apply {
-                    put("id", m.id)
-                    put("name", m.name)
-                }
-                marketsArr.put(o)
-            }
-            rootObj.put("markets", marketsArr)
-
-            // Build Tags Array
-            val tagsArr = JSONArray()
-            for (tg in dbTags) {
-                val o = JSONObject().apply {
-                    put("id", tg.id)
-                    put("name", tg.name)
-                }
-                tagsArr.put(o)
-            }
-            rootObj.put("tags", tagsArr)
-
-            // Build Daily Journals Array
-            val journalsArr = JSONArray()
-            for (j in dbJournals) {
-                val o = JSONObject().apply {
-                    put("dateString", j.dateString)
-                    put("content", j.content)
-                    put("emotions", j.emotions)
-                    put("mistakes", j.mistakes)
-                    put("lessons", j.lessons)
-                }
-                journalsArr.put(o)
-            }
-            rootObj.put("dailyJournals", journalsArr)
-
-            val backupDir = File(context.cacheDir, "backups")
-            backupDir.mkdirs()
-            val file = File(backupDir, "trading_journal_backup.json")
-            FileWriter(file).use { writer ->
-                writer.write(rootObj.toString(2))
-            }
-
-            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            com.example.data.backup.BackupHelper.exportDatabaseToJson(
+                context, dbTrades, dbJournals, dbMarkets, dbTags, dbChecklist
+            )
         } catch (e: Exception) {
             Log.e("JournalViewModel", "Failed to export backup", e)
             null
@@ -593,81 +522,7 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         try {
             val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
             val jsonString = inputStream?.bufferedReader().use { it?.readText() } ?: return@withContext false
-            val rootObj = JSONObject(jsonString)
-
-            // Parse and Restore Markets
-            if (rootObj.has("markets")) {
-                val marketsArr = rootObj.getJSONArray("markets")
-                val marketsList = mutableListOf<Market>()
-                for (i in 0 until marketsArr.length()) {
-                    val o = marketsArr.getJSONObject(i)
-                    marketsList.add(Market(name = o.getString("name")))
-                }
-                repository.insertMarkets(marketsList)
-            }
-
-            // Parse and Restore Tags
-            if (rootObj.has("tags")) {
-                val tagsArr = rootObj.getJSONArray("tags")
-                val tagsList = mutableListOf<Tag>()
-                for (i in 0 until tagsArr.length()) {
-                    val o = tagsArr.getJSONObject(i)
-                    tagsList.add(Tag(name = o.getString("name")))
-                }
-                repository.insertTags(tagsList)
-            }
-
-            // Parse and Restore Daily Journals
-            if (rootObj.has("dailyJournals")) {
-                val journalsArr = rootObj.getJSONArray("dailyJournals")
-                for (i in 0 until journalsArr.length()) {
-                    val o = journalsArr.getJSONObject(i)
-                    val journal = com.example.data.model.DailyJournal(
-                        dateString = o.getString("dateString"),
-                        content = o.optString("content", ""),
-                        emotions = o.optString("emotions", ""),
-                        mistakes = o.optString("mistakes", ""),
-                        lessons = o.optString("lessons", "")
-                    )
-                    dailyJournalDao.insertDailyJournal(journal)
-                }
-            }
-
-            // Parse and Restore Trades
-            if (rootObj.has("trades")) {
-                val tradesArr = rootObj.getJSONArray("trades")
-                for (i in 0 until tradesArr.length()) {
-                    val o = tradesArr.getJSONObject(i)
-                    val exitVal = if (o.isNull("exitPrice")) null else o.getDouble("exitPrice")
-                    val imageVal = if (o.isNull("imagePath")) null else o.getString("imagePath")
-                    val imgBefore = if (o.isNull("imageBeforePath")) null else o.getString("imageBeforePath")
-                    val imgEntry = if (o.isNull("imageEntryPath")) null else o.getString("imageEntryPath")
-                    val imgExit = if (o.isNull("imageExitPath")) null else o.getString("imageExitPath")
-                    val trade = Trade(
-                        side = o.getString("side"),
-                        market = o.getString("market"),
-                        volume = o.getDouble("volume"),
-                        entryPrice = o.getDouble("entryPrice"),
-                        exitPrice = exitVal,
-                        dateTime = o.getLong("dateTime"),
-                        fees = o.getDouble("fees"),
-                        reason = o.getString("reason"),
-                        imagePath = imageVal,
-                        imageBeforePath = imgBefore,
-                        imageEntryPath = imgEntry,
-                        imageExitPath = imgExit,
-                        tags = o.getString("tags"),
-                        strategy = o.optString("strategy", ""),
-                        grade = o.optString("grade", ""),
-                        checklistResults = o.optString("checklistResults", ""),
-                        postTradeNotes = o.optString("postTradeNotes", ""),
-                        richNotes = o.optString("richNotes", ""),
-                        emotionalState = o.optString("emotionalState", "")
-                    )
-                    repository.insertTrade(trade)
-                }
-            }
-            true
+            com.example.data.backup.BackupHelper.importDatabaseFromJson(context, jsonString, db)
         } catch (e: Exception) {
             Log.e("JournalViewModel", "Failed to restore backup", e)
             false

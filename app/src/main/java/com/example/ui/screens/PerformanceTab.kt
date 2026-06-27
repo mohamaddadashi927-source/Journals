@@ -904,6 +904,140 @@ fun MarketBarChartCard(stats: TradeStats, lang: String, currencySymbol: String) 
     }
 }
 
+@Composable
+fun TraderProfileCard(profile: com.example.data.analysis.TraderProfile, lang: String) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+        ),
+        modifier = Modifier.fillMaxWidth().border(
+            width = 1.dp,
+            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                colors = listOf(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
+                )
+            ),
+            shape = RoundedCornerShape(20.dp)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val icon = when (profile.iconName) {
+                        "verified_user" -> Icons.Default.VerifiedUser
+                        "warning" -> Icons.Default.Warning
+                        "speed" -> Icons.Default.Speed
+                        "my_location" -> Icons.Default.MyLocation
+                        else -> Icons.Default.TrendingUp
+                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (lang == "fa") "پروفایل روانشناسی معامله‌گر" else "Trader Personality Profile",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = profile.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "${if (lang == "fa") "ویژگی غالب: " else "Dominant Trait: "} ${profile.dominantTrait}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = profile.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lightbulb,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(20.dp).padding(top = 2.dp)
+                )
+                Column {
+                    Text(
+                        text = if (lang == "fa") "توصیه مربی هوشمند:" else "AI Coach Suggestion:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = profile.suggestion,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
@@ -912,6 +1046,11 @@ fun AiInsightsSection(viewModel: JournalViewModel, lang: String, currencySymbol:
     val stats = advancedStatsOpt ?: return
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // 0. Trader Personality Profile Card
+        stats.traderProfile?.let { profile ->
+            TraderProfileCard(profile = profile, lang = lang)
+        }
+
         // 1. Discipline Score Radial Card
         DisciplineScoreCard(score = stats.disciplineScore, lang = lang)
 
