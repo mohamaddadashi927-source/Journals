@@ -143,8 +143,9 @@ fun DashboardScreen(
             )
         }
 
+        val resolvedAccountName = if (accountName == "حساب شخصی") Loc.tr("personal_account", language) else accountName
         val screenTitle = when (activeTab) {
-            0 -> if (isAccountInitialized) accountName else Loc.tr("dashboard_title", language)
+            0 -> if (isAccountInitialized) resolvedAccountName else Loc.tr("dashboard_title", language)
             1 -> if (language == "fa") "تقویم معاملاتی" else "Trading Calendar"
             2 -> if (language == "fa") "تحلیل عملکرد پیشرفته" else "Performance Analytics"
             3 -> if (language == "fa") "دفترچه روانشناسی روزانه" else "Daily Psychology Journal"
@@ -253,6 +254,15 @@ fun DashboardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(260.dp)
+                                )
+                            }
+
+                            // AI Smart Coach Summary
+                            item {
+                                DashboardAiSummaryCard(
+                                    viewModel = viewModel,
+                                    lang = language,
+                                    onNavigateToAnalysis = { activeTab = 2 }
                                 )
                             }
 
@@ -667,6 +677,132 @@ fun TradeItemRow(
                         color = trendColor
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardAiSummaryCard(viewModel: JournalViewModel, lang: String, onNavigateToAnalysis: () -> Unit) {
+    val advancedStatsOpt by viewModel.advancedStats.collectAsState()
+    val stats = advancedStatsOpt ?: return
+
+    val score = stats.disciplineScore
+    val scoreColor = when {
+        score >= 85 -> EmeraldGreen
+        score >= 70 -> OpenBlue
+        score >= 50 -> Color(0xFFF59E0B)
+        else -> CrimsonRed
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigateToAnalysis() }
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                RoundedCornerShape(16.dp)
+            )
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🧠", fontSize = 20.sp)
+                    Text(
+                        text = if (lang == "fa") "آنالیز الگو و مربی هوشمند (AI)" else "AI Coaching & Patterns",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Text(
+                    text = "${if (lang == "fa") "انضباط" else "Discipline"}: $score/100",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = scoreColor,
+                    modifier = Modifier
+                        .background(scoreColor.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+
+            if (stats.insights.isEmpty()) {
+                Text(
+                    text = if (lang == "fa") "جهت دریافت تحلیل‌های هوشمند رفتار معاملاتی و مربیگری، حداقل ۳ معامله ثبت کنید."
+                           else "Register at least 3 trades to unlock personalized coaching insights and behavior analysis.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                val primaryInsight = stats.insights.first()
+                val insightColor = when (primaryInsight.type) {
+                    com.example.data.analysis.InsightType.POSITIVE -> EmeraldGreen
+                    com.example.data.analysis.InsightType.NEGATIVE -> CrimsonRed
+                    com.example.data.analysis.InsightType.WARNING -> Color(0xFFF59E0B)
+                    com.example.data.analysis.InsightType.INFO -> OpenBlue
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(insightColor, CircleShape)
+                        )
+                        Text(
+                            text = primaryInsight.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Text(
+                        text = primaryInsight.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 15.sp,
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (lang == "fa") "مشاهده جزئیات تحلیل رفتار معاملاتی" else "View detailed performance psychology",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.TrendingFlat,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

@@ -779,6 +779,36 @@ object Loc {
             "fa" to "بررسی ثبت شد",
             "en" to "Review successfully saved",
             "ar" to "تم حفظ المراجعة بنجاح"
+        ),
+        "checklist_sl" to mapOf(
+            "fa" to "آیا حد ضرر (Stop Loss) مشخص شده است؟",
+            "en" to "Is the Stop Loss specified?",
+            "ar" to "هل تم تحديد حد الخسارة (Stop Loss)؟"
+        ),
+        "checklist_tp" to mapOf(
+            "fa" to "آیا حد سود (Take Profit) مشخص شده است؟",
+            "en" to "Is the Take Profit specified?",
+            "ar" to "هل تم تحديد حد الربح (Take Profit)؟"
+        ),
+        "checklist_risk" to mapOf(
+            "fa" to "آیا میزان ریسک معامله بر اساس مدیریت سرمایه است؟",
+            "en" to "Is the trade risk aligned with money management?",
+            "ar" to "هل حجم مخاطرة الصفقة متوافق مع إدارة رأس المال؟"
+        ),
+        "checklist_strategy" to mapOf(
+            "fa" to "آیا معامله با استراتژی اصلی من همخوانی کامل دارد؟",
+            "en" to "Does the trade fully align with my main strategy?",
+            "ar" to "هل تتطابق الصفقة تماماً مع استراتيجيتي الرئيسية؟"
+        ),
+        "checklist_emotions" to mapOf(
+            "fa" to "آیا احساس هیجان، طمع یا انتقام در تصمیم من دخیل نیست؟",
+            "en" to "Am I free from excitement, greed, or revenge trading?",
+            "ar" to "هل أنا خالٍ من مشاعر الحماس، الجشع، أو الرغبة في الانتقام?"
+        ),
+        "personal_account" to mapOf(
+            "fa" to "حساب شخصی",
+            "en" to "Personal Account",
+            "ar" to "الحساب الشخصي"
         )
     )
 }

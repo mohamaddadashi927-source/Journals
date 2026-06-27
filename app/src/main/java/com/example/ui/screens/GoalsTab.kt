@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import com.example.data.model.ChecklistItem
+import com.example.ui.util.Loc
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
 import com.example.ui.viewmodel.JournalViewModel
@@ -260,8 +261,16 @@ fun GoalsTab(viewModel: JournalViewModel) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    val displayTitle = when (item.title) {
+                                        "آیا حد ضرر (Stop Loss) مشخص شده است؟" -> Loc.tr("checklist_sl", language)
+                                        "آیا حد سود (Take Profit) مشخص شده است؟" -> Loc.tr("checklist_tp", language)
+                                        "آیا میزان ریسک معامله بر اساس مدیریت سرمایه است؟" -> Loc.tr("checklist_risk", language)
+                                        "آیا معامله با استراتژی اصلی من همخوانی کامل دارد؟" -> Loc.tr("checklist_strategy", language)
+                                        "آیا احساس هیجان، طمع یا انتقام در تصمیم من دخیل نیست؟" -> Loc.tr("checklist_emotions", language)
+                                        else -> item.title
+                                    }
                                     Text(
-                                        text = item.title,
+                                        text = displayTitle,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         modifier = Modifier.weight(1f)

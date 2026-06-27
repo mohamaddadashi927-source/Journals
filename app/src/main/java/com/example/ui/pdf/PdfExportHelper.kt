@@ -24,7 +24,7 @@ import java.util.Locale
  */
 object PdfExportHelper {
 
-    fun generateTradeDetailPdf(context: Context, trade: Trade, currencySymbol: String): Uri? {
+    fun generateTradeDetailPdf(context: Context, trade: Trade, currencySymbol: String, language: String): Uri? {
         val pdfDocument = PdfDocument()
         
         // A4 page specifications: 595 x 842 points
@@ -67,12 +67,14 @@ object PdfExportHelper {
                 textAlign = Paint.Align.RIGHT
             }
 
-            // Persian Title (Right)
-            canvas.drawText("گزارش جزئیات معامله", 535f, currentY + 32f, titlePaint)
+            // Localized Title (Right)
+            val reportTitle = if (language == "fa") "گزارش جزئیات معامله" else if (language == "ar") "تقرير تفاصيل الصفقة" else "Trade Detail Report"
+            canvas.drawText(reportTitle, 535f, currentY + 32f, titlePaint)
             
             val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
             val dateStr = sdf.format(Date(trade.dateTime))
-            canvas.drawText("تاریخ ثبت: $dateStr", 535f, currentY + 52f, subtitlePaint)
+            val registrationDate = if (language == "fa") "تاریخ ثبت: $dateStr" else if (language == "ar") "تاريخ التسجيل: $dateStr" else "Registered: $dateStr"
+            canvas.drawText(registrationDate, 535f, currentY + 52f, subtitlePaint)
 
             // English Title (Left)
             titlePaint.textAlign = Paint.Align.LEFT
@@ -107,7 +109,8 @@ object PdfExportHelper {
                 isAntiAlias = true
                 textAlign = Paint.Align.RIGHT
             }
-            canvas.drawText("بازار / نماد", 539f, currentY + 22f, labelPaint)
+            val marketLabel = if (language == "fa") "بازار / نماد" else if (language == "ar") "السوق / الرمز" else "Asset / Symbol"
+            canvas.drawText(marketLabel, 539f, currentY + 22f, labelPaint)
 
             val valuePaint = TextPaint().apply {
                 color = android.graphics.Color.parseColor("#001D36")
@@ -122,7 +125,11 @@ object PdfExportHelper {
             val sideIsBuy = trade.side.uppercase() == "BUY"
             val chipBgColor = if (sideIsBuy) "#D1E9D2" else "#FFDAD6"
             val chipTextColor = if (sideIsBuy) "#1D6B24" else "#BA1A1A"
-            val sideText = if (sideIsBuy) "خرید | BUY" else "فروش | SELL"
+            val sideText = if (sideIsBuy) {
+                if (language == "fa") "خرید | BUY" else if (language == "ar") "شراء | BUY" else "BUY"
+            } else {
+                if (language == "fa") "فروش | SELL" else if (language == "ar") "بيع | SELL" else "SELL"
+            }
 
             val chipPaint = Paint().apply {
                 color = android.graphics.Color.parseColor(chipBgColor)
@@ -161,9 +168,9 @@ object PdfExportHelper {
                 else -> "#BA1A1A"
             }
             val pnlLabel = when {
-                !isClosed -> "وضعیت معامله (باز)"
-                isProfit -> "سود خالص (برد)"
-                else -> "زیان خالص (باخت)"
+                !isClosed -> if (language == "fa") "وضعیت معامله (باز)" else if (language == "ar") "حالة الصفقة (مفتوحة)" else "Trade Status (Open)"
+                isProfit -> if (language == "fa") "سود خالص (برد)" else if (language == "ar") "صافي الربح (ربح)" else "Net Profit (Win)"
+                else -> if (language == "fa") "زیان خالص (باخت)" else if (language == "ar") "صافي الخسارة (خسارة)" else "Net Loss (Loss)"
             }
 
             val leftCardBgPaint = Paint().apply {
@@ -190,14 +197,14 @@ object PdfExportHelper {
                 val prefix = if (isProfit) "+" else ""
                 "$prefix${String.format(Locale.US, "%,.2f", trade.pnl)} $currencySymbol"
             } else {
-                "درحال معامله"
+                if (language == "fa") "درحال معامله" else if (language == "ar") "قيد التداول" else "Open Position"
             }
             canvas.drawText(pnlValueStr, 271.5f, currentY + 45f, valuePaint)
 
             val secondaryText = if (isClosed) {
-                "معامله بسته شده"
+                if (language == "fa") "معامله بسته شده" else if (language == "ar") "الصفقة مغلقة" else "Closed Position"
             } else {
-                "قیمت ورود: ${trade.entryPrice}"
+                if (language == "fa") "قیمت ورود: ${trade.entryPrice}" else if (language == "ar") "سعر الدخول: ${trade.entryPrice}" else "Entry Price: ${trade.entryPrice}"
             }
             val secondaryTextPaint = Paint().apply {
                 color = android.graphics.Color.parseColor(pnlTextColor)
@@ -248,35 +255,41 @@ object PdfExportHelper {
             }
 
             // Top Right: Entry Price
-            canvas.drawText("قیمت ورود", 539f, currentY + 18f, qLabelPaint)
+            val entryPriceLabel = if (language == "fa") "قیمت ورود" else if (language == "ar") "سعر الدخول" else "Entry Price"
+            canvas.drawText(entryPriceLabel, 539f, currentY + 18f, qLabelPaint)
             canvas.drawText("${String.format(Locale.US, "%,.4f", trade.entryPrice)}", 539f, currentY + 36f, qValuePaint)
 
             // Top Left: Exit Price
-            canvas.drawText("قیمت خروج", 277.5f, currentY + 18f, qLabelPaint)
+            val exitPriceLabel = if (language == "fa") "قیمت خروج" else if (language == "ar") "سعر الخروج" else "Exit Price"
+            canvas.drawText(exitPriceLabel, 277.5f, currentY + 18f, qLabelPaint)
             val exitPriceStr = if (trade.exitPrice != null) {
                 String.format(Locale.US, "%,.4f", trade.exitPrice)
             } else {
-                "باز"
+                if (language == "fa") "باز" else if (language == "ar") "مفتوح" else "Open"
             }
             canvas.drawText(exitPriceStr, 277.5f, currentY + 36f, qValuePaint)
 
             // Bottom Right: Volume
-            canvas.drawText("حجم معامله", 539f, currentY + 63f, qLabelPaint)
+            val volumeLabel = if (language == "fa") "حجم معامله" else if (language == "ar") "حجم الصفقة" else "Trade Volume"
+            canvas.drawText(volumeLabel, 539f, currentY + 63f, qLabelPaint)
             canvas.drawText("${String.format(Locale.US, "%,.6f", trade.volume)}", 539f, currentY + 81f, qValuePaint)
 
             // Bottom Left: Date
             val sdfPdf = SimpleDateFormat("yyyy/MM/dd", Locale.US)
             val tradeDateStr = sdfPdf.format(java.util.Date(trade.dateTime))
-            canvas.drawText("تاریخ معامله", 277.5f, currentY + 63f, qLabelPaint)
+            val tradeDateLabel = if (language == "fa") "تاریخ معامله" else if (language == "ar") "تاريخ الصفقة" else "Trade Date"
+            canvas.drawText(tradeDateLabel, 277.5f, currentY + 63f, qLabelPaint)
             canvas.drawText(tradeDateStr, 277.5f, currentY + 81f, qValuePaint)
 
             currentY += 105f
 
             // 4. Reasons for entry
-            currentY = drawTextSection(canvas, "دلایل ورود به معامله", trade.reason, currentY)
+            val reasonTitle = if (language == "fa") "دلایل ورود به معامله" else if (language == "ar") "أسباب الدخول والتحليل" else "Reasons for Trade Entry"
+            currentY = drawTextSection(canvas, reasonTitle, trade.reason, currentY, language)
 
             // 5. Post-Trade Notes
-            currentY = drawTextSection(canvas, "یادداشت‌ها و بازبینی بعد از معامله", trade.postTradeNotes, currentY)
+            val postTradeTitle = if (language == "fa") "یادداشت‌ها و بازبینی بعد از معامله" else if (language == "ar") "ملاحظات ومراجعة ما بعد الصفقة" else "Post-Trade Review & Notes"
+            currentY = drawTextSection(canvas, postTradeTitle, trade.postTradeNotes, currentY, language)
 
             // 6. Tags
             if (trade.tags.isNotBlank()) {
@@ -287,7 +300,8 @@ object PdfExportHelper {
                     isAntiAlias = true
                     textAlign = Paint.Align.RIGHT
                 }
-                canvas.drawText("برچسب‌ها", 559f, currentY + 14f, tagsTitlePaint)
+                val tagsLabel = if (language == "fa") "برچسب‌ها" else if (language == "ar") "الوسوم" else "Tags"
+                canvas.drawText(tagsLabel, 559f, currentY + 14f, tagsTitlePaint)
                 currentY += 24f
 
                 val tagsList = trade.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -349,7 +363,14 @@ object PdfExportHelper {
                 textAlign = Paint.Align.CENTER
             }
             val totalPages = if (imageBitmap != null) 2 else 1
-            canvas.drawText("صفحه ۱ از $totalPages - ژورنال معاملاتی هوشمند", 297.5f, 810f, footerPaint)
+            val footerText1 = if (language == "fa") {
+                "صفحه ۱ از $totalPages - ژورنال معاملاتی هوشمند"
+            } else if (language == "ar") {
+                "صفحة ١ من $totalPages - سجل التداول الذكي"
+            } else {
+                "Page 1 of $totalPages - Smart Trading Journal"
+            }
+            canvas.drawText(footerText1, 297.5f, 810f, footerPaint)
 
             pdfDocument.finishPage(page)
 
@@ -372,7 +393,14 @@ object PdfExportHelper {
                     isAntiAlias = true
                     textAlign = Paint.Align.RIGHT
                 }
-                canvas2.drawText("نمودار و تحلیل گرافیکی معامله #${trade.id}", 539f, 62f, page2TitlePaint)
+                val page2Title = if (language == "fa") {
+                    "نمودار و تحلیل گرافیکی معامله #${trade.id}"
+                } else if (language == "ar") {
+                    "المخطط والتحليل البياني للصفقة #${trade.id}"
+                } else {
+                    "Chart & Graphical Analysis for Trade #${trade.id}"
+                }
+                canvas2.drawText(page2Title, 539f, 62f, page2TitlePaint)
 
                 // Render image inside margins (523 width max, 650 height max)
                 val targetWidth = 523f
@@ -399,7 +427,14 @@ object PdfExportHelper {
                 canvas2.drawBitmap(imageBitmap, null, destRect, Paint(Paint.FILTER_BITMAP_FLAG))
 
                 // Page 2 Footer
-                canvas2.drawText("صفحه ۲ از ۲ - ژورنال معاملاتی هوشمند", 297.5f, 810f, footerPaint)
+                val footerText2 = if (language == "fa") {
+                    "صفحه ۲ از ۲ - ژورنال معاملاتی هوشمند"
+                } else if (language == "ar") {
+                    "صفحة ٢ من ٢ - سجل التداول الذكي"
+                } else {
+                    "Page 2 of 2 - Smart Trading Journal"
+                }
+                canvas2.drawText(footerText2, 297.5f, 810f, footerPaint)
 
                 pdfDocument.finishPage(page2)
             }
@@ -426,7 +461,7 @@ object PdfExportHelper {
         }
     }
 
-    private fun drawTextSection(canvas: Canvas, title: String, text: String, startY: Float): Float {
+    private fun drawTextSection(canvas: Canvas, title: String, text: String, startY: Float, language: String): Float {
         var y = startY
         
         // Section Title
@@ -447,7 +482,14 @@ object PdfExportHelper {
         }
 
         // Clean double-language default message
-        val contentText = text.ifBlank { "توضیحاتی برای این بخش ثبت نشده است." }
+        val defaultNoContent = if (language == "fa") {
+            "توضیحاتی برای این بخش ثبت نشده است."
+        } else if (language == "ar") {
+            "لا توجد ملاحظات مسجلة لهذا القسم."
+        } else {
+            "No explanations recorded for this section."
+        }
+        val contentText = text.ifBlank { defaultNoContent }
 
         // Multi-line wrap using StaticLayout
         val staticLayout = StaticLayout.Builder.obtain(contentText, 0, contentText.length, textPaint, 499)

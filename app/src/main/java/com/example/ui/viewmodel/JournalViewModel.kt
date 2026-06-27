@@ -251,13 +251,13 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         fun getDayName(day: Int?, lang: String): String {
             if (day == null) return "N/A"
             return when (day) {
-                Calendar.SATURDAY -> if (lang == "fa") "شنبه" else "Saturday"
-                Calendar.SUNDAY -> if (lang == "fa") "یک‌شنبه" else "Sunday"
-                Calendar.MONDAY -> if (lang == "fa") "دوشنبه" else "Monday"
-                Calendar.TUESDAY -> if (lang == "fa") "سه‌شنبه" else "Tuesday"
-                Calendar.WEDNESDAY -> if (lang == "fa") "چهارشنبه" else "Wednesday"
-                Calendar.THURSDAY -> if (lang == "fa") "پنج‌شنبه" else "Thursday"
-                Calendar.FRIDAY -> if (lang == "fa") "جمعه" else "Friday"
+                Calendar.SATURDAY -> if (lang == "fa") "شنبه" else if (lang == "ar") "السبت" else "Saturday"
+                Calendar.SUNDAY -> if (lang == "fa") "یک‌شنبه" else if (lang == "ar") "الأحد" else "Sunday"
+                Calendar.MONDAY -> if (lang == "fa") "دوشنبه" else if (lang == "ar") "الإثنين" else "Monday"
+                Calendar.TUESDAY -> if (lang == "fa") "سه‌شنبه" else if (lang == "ar") "الثلاثاء" else "Tuesday"
+                Calendar.WEDNESDAY -> if (lang == "fa") "چهارشنبه" else if (lang == "ar") "الأربعاء" else "Wednesday"
+                Calendar.THURSDAY -> if (lang == "fa") "پنج‌شنبه" else if (lang == "ar") "الخميس" else "Thursday"
+                Calendar.FRIDAY -> if (lang == "fa") "جمعه" else if (lang == "ar") "الجمعة" else "Friday"
                 else -> "N/A"
             }
         }
@@ -326,6 +326,14 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             pnlByGrade = pnlByGrade
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TradeStats())
+
+    val advancedStats: StateFlow<com.example.data.analysis.AdvancedStats?> = combine(
+        repository.allTrades,
+        allDailyJournals,
+        language
+    ) { allTrades, allJournals, lang ->
+        com.example.data.analysis.AnalysisEngine.analyze(allTrades, allJournals, lang)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Save/Update Settings in SharedPreferences
     fun setCurrency(newCurrency: String) {
@@ -710,21 +718,40 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
                     writer.write("</style>\n")
                     writer.write("</head>\n")
                     writer.write("<body>\n")
-                    writer.write("  <div class=\"header-title\">گزارش جامع دفترچه ژورنال معاملاتی حرفه‌ای</div>\n")
+                    val lang = language.value
+                    val titleText = when (lang) {
+                        "fa" -> "گزارش جامع دفترچه ژورنال معاملاتی حرفه‌ای"
+                        "ar" -> "التقرير الشامل لسجل التداول الاحترافي"
+                        else -> "Comprehensive Professional Trading Journal Report"
+                    }
+                    val thId = if (lang == "fa") "شناسه معامله" else if (lang == "ar") "معرّف الصفقة" else "Trade ID"
+                    val thSide = if (lang == "fa") "نوع معامله" else if (lang == "ar") "نوع الصفقة" else "Side"
+                    val thMarket = if (lang == "fa") "نماد / بازار" else if (lang == "ar") "الرمز / السوق" else "Asset / Market"
+                    val thVolume = if (lang == "fa") "حجم" else if (lang == "ar") "الحجم" else "Volume"
+                    val thEntry = if (lang == "fa") "قیمت ورود" else if (lang == "ar") "سعر الدخول" else "Entry Price"
+                    val thExit = if (lang == "fa") "قیمت خروج" else if (lang == "ar") "سعر الخروج" else "Exit Price"
+                    val thPnl = if (lang == "fa") "سود و زیان" else if (lang == "ar") "الربح/الخسارة" else "PnL"
+                    val thStatus = if (lang == "fa") "وضعیت" else if (lang == "ar") "الحالة" else "Status"
+                    val thDate = if (lang == "fa") "تاریخ و ساعت" else if (lang == "ar") "التاريخ والوقت" else "Date & Time"
+                    val thNotes = if (lang == "fa") "دلایل ورود و تحلیل" else if (lang == "ar") "أسباب الدخول والتحليل" else "Entry Reasons & Analysis"
+                    val thStrategy = if (lang == "fa") "استراتژی (تگ‌ها)" else if (lang == "ar") "الاستراتيجية (الوسوم)" else "Strategy (Tags)"
+                    val thReview = if (lang == "fa") "یادداشت‌های بررسی معامله" else if (lang == "ar") "ملاحظات مراجعة الصفقة" else "Post-Trade Review Notes"
+
+                    writer.write("  <div class=\"header-title\">$titleText</div>\n")
                     writer.write("  <table>\n")
                     writer.write("    <tr>\n")
-                    writer.write("      <th>شناسه معامله</th>\n")
-                    writer.write("      <th>نوع معامله</th>\n")
-                    writer.write("      <th>نماد / بازار</th>\n")
-                    writer.write("      <th>حجم</th>\n")
-                    writer.write("      <th>قیمت ورود</th>\n")
-                    writer.write("      <th>قیمت خروج</th>\n")
-                    writer.write("      <th>سود و زیان</th>\n")
-                    writer.write("      <th>وضعیت</th>\n")
-                    writer.write("      <th>تاریخ و ساعت</th>\n")
-                    writer.write("      <th>دلایل ورود و تحلیل</th>\n")
-                    writer.write("      <th>استراتژی (تگ‌ها)</th>\n")
-                    writer.write("      <th>یادداشت‌های بررسی معامله</th>\n")
+                    writer.write("      <th>$thId</th>\n")
+                    writer.write("      <th>$thSide</th>\n")
+                    writer.write("      <th>$thMarket</th>\n")
+                    writer.write("      <th>$thVolume</th>\n")
+                    writer.write("      <th>$thEntry</th>\n")
+                    writer.write("      <th>$thExit</th>\n")
+                    writer.write("      <th>$thPnl</th>\n")
+                    writer.write("      <th>$thStatus</th>\n")
+                    writer.write("      <th>$thDate</th>\n")
+                    writer.write("      <th>$thNotes</th>\n")
+                    writer.write("      <th>$thStrategy</th>\n")
+                    writer.write("      <th>$thReview</th>\n")
                     writer.write("    </tr>\n")
                     
                     val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -738,11 +765,19 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
                     }
 
                     for (t in dbTrades) {
-                        val pnlStr = if (t.pnl != null) String.format(Locale.US, "%.4f", t.pnl) else "باز"
+                        val pnlStr = if (t.pnl != null) {
+                            String.format(Locale.US, "%.4f", t.pnl)
+                        } else {
+                            if (lang == "fa") "باز" else if (lang == "ar") "مفتوح" else "Open"
+                        }
                         val dateStr = sdf.format(Date(t.dateTime))
                         
                         val sideClass = if (t.side == "BUY" || t.side == "خرید") "buy-side" else "sell-side"
-                        val sideText = if (t.side == "BUY" || t.side == "خرید") "خرید (BUY)" else "فروش (SELL)"
+                        val sideText = if (t.side == "BUY" || t.side == "خرید") {
+                            if (lang == "fa") "خرید (BUY)" else if (lang == "ar") "شراء (BUY)" else "BUY"
+                        } else {
+                            if (lang == "fa") "فروش (SELL)" else if (lang == "ar") "بيع (SELL)" else "SELL"
+                        }
                         
                         val statusClass = when (t.status) {
                             "WIN" -> "win-bg"
@@ -750,9 +785,9 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
                             else -> "open-bg"
                         }
                         val statusText = when (t.status) {
-                            "WIN" -> "برد (WIN)"
-                            "LOSS" -> "باخت (LOSS)"
-                            else -> "موقعیت باز"
+                            "WIN" -> if (lang == "fa") "برد (WIN)" else if (lang == "ar") "ربح (WIN)" else "WIN"
+                            "LOSS" -> if (lang == "fa") "باخت (LOSS)" else if (lang == "ar") "خسارة (LOSS)" else "LOSS"
+                            else -> if (lang == "fa") "موقعیت باز" else if (lang == "ar") "مركز مفتوح" else "Open Position"
                         }
 
                         writer.write("    <tr>\n")

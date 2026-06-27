@@ -52,6 +52,7 @@ fun SettingsScreen(
     val language by viewModel.language.collectAsState()
     val initialBalance by viewModel.initialBalance.collectAsState()
     val accountName by viewModel.accountName.collectAsState()
+    val resolvedAccountName = if (accountName == "حساب شخصی") Loc.tr("personal_account", language) else accountName
 
     // Dialog trigger states
     var showMarketsDialog by remember { mutableStateOf(false) }
@@ -220,7 +221,7 @@ fun SettingsScreen(
                         SettingsItemRow(
                             icon = Icons.Default.AccountBalanceWallet,
                             title = Loc.tr("initial_balance", language),
-                            subtitle = "$accountName - ${String.format(Locale.US, "%,.1f", initialBalance)} ${
+                            subtitle = "$resolvedAccountName - ${String.format(Locale.US, "%,.1f", initialBalance)} ${
                                 when (currency) {
                                     "IRT" -> "تومان"
                                     "USDT" -> "USDT"
@@ -602,7 +603,7 @@ fun SettingsScreen(
 
         // Account Details & Balance Editor Dialog
         if (showBalanceEditDialog) {
-            var tempName by remember { mutableStateOf(accountName) }
+            var tempName by remember { mutableStateOf(resolvedAccountName) }
             var tempBalanceStr by remember { mutableStateOf(String.format(Locale.US, "%.1f", initialBalance)) }
 
             AlertDialog(

@@ -101,7 +101,7 @@ fun TradeDetailScreen(
                         IconButton(onClick = {
                             trade?.let { t ->
                                 coroutineScope.launch {
-                                    val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, t, currencySymbol)
+                                    val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, t, currencySymbol, language)
                                     if (pdfUri != null) {
                                         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                             type = "application/pdf"
@@ -569,7 +569,7 @@ fun TradeDetailScreen(
                             Button(
                                 onClick = {
                                     coroutineScope.launch {
-                                        val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, trade, currencySymbol)
+                                        val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, trade, currencySymbol, language)
                                         if (pdfUri != null) {
                                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                                 type = "application/pdf"

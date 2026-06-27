@@ -97,6 +97,16 @@ fun PerformanceTab(viewModel: JournalViewModel) {
                         )
                     }
                 )
+                Tab(
+                    selected = selectedSection == 3,
+                    onClick = { selectedSection = 3 },
+                    text = {
+                        Text(
+                            text = if (language == "fa") "تحلیل هوشمند (AI)" else "AI Insights",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                )
             }
         }
 
@@ -167,6 +177,12 @@ fun PerformanceTab(viewModel: JournalViewModel) {
 
                     item {
                         GradesStatsSection(stats = stats, currencySymbol = currencySymbol, lang = language)
+                    }
+                }
+                3 -> {
+                    // Section 3: Smart AI analysis & insights
+                    item {
+                        AiInsightsSection(viewModel = viewModel, lang = language, currencySymbol = currencySymbol)
                     }
                 }
             }
@@ -889,3 +905,315 @@ fun MarketBarChartCard(stats: TradeStats, lang: String, currencySymbol: String) 
 }
 
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
+@Composable
+fun AiInsightsSection(viewModel: JournalViewModel, lang: String, currencySymbol: String) {
+    val advancedStatsOpt by viewModel.advancedStats.collectAsState()
+    val stats = advancedStatsOpt ?: return
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // 1. Discipline Score Radial Card
+        DisciplineScoreCard(score = stats.disciplineScore, lang = lang)
+
+        // 2. Most Common Mistake highlight if present
+        stats.mostCommonMistake?.let { mistake ->
+            MistakeHighlightCard(mistake = mistake, lang = lang)
+        }
+
+        // 3. AI Insights List
+        Text(
+            text = if (lang == "fa") "توصیه‌ها و آنالیز الگوهای رفتاری" else if (lang == "ar") "توصيات وتحليل السلوك" else "AI Pattern Analysis & Insights",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        if (stats.insights.isEmpty()) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (lang == "fa") "داده‌های کافی برای ثبت بینش‌های هوش مصنوعی وجود ندارد." else "Not enough trade data for AI insights.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            stats.insights.forEach { insight ->
+                InsightItemCard(insight = insight, lang = lang)
+            }
+        }
+    }
+}
+
+@Composable
+fun DisciplineScoreCard(score: Int, lang: String) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // Circular progress gauge
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(90.dp)
+            ) {
+                val progressColor = when {
+                    score >= 85 -> EmeraldGreen
+                    score >= 70 -> OpenBlue
+                    score >= 50 -> Color(0xFFF59E0B) // Amber
+                    else -> CrimsonRed
+                }
+                
+                Canvas(modifier = Modifier.size(90.dp)) {
+                    // Background track
+                    drawArc(
+                        color = progressColor.copy(alpha = 0.15f),
+                        startAngle = 0f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                    // Active track
+                    drawArc(
+                        color = progressColor,
+                        startAngle = -90f,
+                        sweepAngle = (score.toFloat() / 100f) * 360f,
+                        useCenter = false,
+                        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
+                
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "$score",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = progressColor
+                    )
+                    Text(
+                        text = if (lang == "fa") "از ۱۰۰" else if (lang == "ar") "من ١٠٠" else "/ 100",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Description Column
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (lang == "fa") "امتیاز انضباط معامله‌گر" else if (lang == "ar") "معدل انضباط المتداول" else "Discipline Score",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                val (tierName, tierDesc) = when {
+                    score >= 85 -> Pair(
+                        if (lang == "fa") "استاد انضباط 🏆" else "Discipline Master 🏆",
+                        if (lang == "fa") "شما با کنترل عالی احساسات، رعایت استراتژی و مدیریت ریسک معامله می‌کنید. عالی است!"
+                        else "You show exceptional risk management and strict system adherence. Outstanding work!"
+                    )
+                    score >= 70 -> Pair(
+                        if (lang == "fa") "معامله‌گر حرفه‌ای 📈" else "Professional Trader 📈",
+                        if (lang == "fa") "انضباط کلی شما خوب است. فقط کافیست اشتباهات کوچک را از بین ببرید تا به سود مستمر برسید."
+                        else "Good overall consistency. Eliminate minor errors to maximize compounding profits."
+                    )
+                    score >= 50 -> Pair(
+                        if (lang == "fa") "در حال توسعه 🚧" else "Developing Trader 🚧",
+                        if (lang == "fa") "انضباط شما نوسانی است. فومو یا بستن زود سودها را بررسی و محدود کنید."
+                        else "Inconsistent behavior. Review your FOMO entries and early exits."
+                    )
+                    else -> Pair(
+                        if (lang == "fa") "معامله‌گر هیجانی (خطرناک) 🚨" else "Impulsive Trader 🚨",
+                        if (lang == "fa") "ریسک ترید شما بالا و خارج از چارچوب انضباط است! روی چک‌لیست قبل ورود تمرکز کنید."
+                        else "High risk profile! Take a break, stop overtrading, and strictly execute pre-trade checklists."
+                    )
+                }
+
+                Text(
+                    text = tierName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = when {
+                        score >= 85 -> EmeraldGreen
+                        score >= 70 -> OpenBlue
+                        score >= 50 -> Color(0xFFF59E0B)
+                        else -> CrimsonRed
+                    },
+                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                )
+
+                Text(
+                    text = tierDesc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MistakeHighlightCard(mistake: String, lang: String) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CrimsonRed.copy(alpha = 0.08f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, CrimsonRed.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(CrimsonRed.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = CrimsonRed,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (lang == "fa") "بزرگترین نقطه ضعف شناسایی شده" else "Biggest Trading Flaw",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CrimsonRed,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = mistake,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (lang == "fa") "تلاش متمرکز برای فیلتر کردن این اشتباه، بازدهی خالص شما را متحول می‌کند."
+                           else "Focusing entirely on avoiding this single mistake will drastically elevate your net expectancy.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun InsightItemCard(insight: com.example.data.analysis.TradingInsight, lang: String) {
+    val (bgColor, borderColor, tintColor, icon) = when (insight.type) {
+        com.example.data.analysis.InsightType.POSITIVE -> Tuple4(
+            EmeraldGreen.copy(alpha = 0.06f),
+            EmeraldGreen.copy(alpha = 0.3f),
+            EmeraldGreen,
+            Icons.Default.CheckCircle
+        )
+        com.example.data.analysis.InsightType.NEGATIVE -> Tuple4(
+            CrimsonRed.copy(alpha = 0.06f),
+            CrimsonRed.copy(alpha = 0.3f),
+            CrimsonRed,
+            Icons.Default.Cancel
+        )
+        com.example.data.analysis.InsightType.WARNING -> Tuple4(
+            Color(0xFFF59E0B).copy(alpha = 0.06f),
+            Color(0xFFF59E0B).copy(alpha = 0.3f),
+            Color(0xFFF59E0B),
+            Icons.Default.Error
+        )
+        com.example.data.analysis.InsightType.INFO -> Tuple4(
+            OpenBlue.copy(alpha = 0.06f),
+            OpenBlue.copy(alpha = 0.3f),
+            OpenBlue,
+            Icons.Default.Info
+        )
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(tintColor.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tintColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = insight.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    insight.metricValue?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = tintColor,
+                            modifier = Modifier
+                                .background(tintColor.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = insight.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 17.sp
+                )
+            }
+        }
+    }
+}
+
+private data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

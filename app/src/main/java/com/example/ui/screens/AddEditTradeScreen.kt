@@ -782,7 +782,15 @@ fun AddEditTradeScreen(
                                         }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(item.title, style = MaterialTheme.typography.bodyMedium)
+                                    val displayTitle = when (item.title) {
+                                        "آیا حد ضرر (Stop Loss) مشخص شده است؟" -> Loc.tr("checklist_sl", language)
+                                        "آیا حد سود (Take Profit) مشخص شده است؟" -> Loc.tr("checklist_tp", language)
+                                        "آیا میزان ریسک معامله بر اساس مدیریت سرمایه است؟" -> Loc.tr("checklist_risk", language)
+                                        "آیا معامله با استراتژی اصلی من همخوانی کامل دارد؟" -> Loc.tr("checklist_strategy", language)
+                                        "آیا احساس هیجان، طمع یا انتقام در تصمیم من دخیل نیست؟" -> Loc.tr("checklist_emotions", language)
+                                        else -> item.title
+                                    }
+                                    Text(displayTitle, style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
                         }
