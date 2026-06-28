@@ -56,6 +56,13 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     val accountName = MutableStateFlow(sharedPrefs.getString("account_name", "حساب شخصی") ?: "حساب شخصی")
     val isAccountInitialized = MutableStateFlow(sharedPrefs.getBoolean("is_account_initialized", false))
 
+    // Accounts list StateFlow
+    val accountsList = MutableStateFlow<List<TradingAccount>>(emptyList())
+
+    init {
+        loadAccounts()
+    }
+
     // Trading Goals
     val dailyGoal = MutableStateFlow(sharedPrefs.getFloat("daily_goal", 100f).toDouble())
     val weeklyGoal = MutableStateFlow(sharedPrefs.getFloat("weekly_goal", 500f).toDouble())
@@ -360,6 +367,114 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             .putFloat("initial_balance", balance.toFloat())
             .putBoolean("is_account_initialized", true)
             .apply()
+        
+        // Sync inside our loaded list
+        val activeId = sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default"
+        val currentList = accountsList.value.map {
+            if (it.id == activeId) it.copy(name = name, initialBalance = balance) else it
+        }
+        accountsList.value = currentList
+        sharedPrefs.edit()
+            .putString("${activeId}_name", name)
+            .putFloat("${activeId}_balance", balance.toFloat())
+            .apply()
+    }
+
+    fun loadAccounts() {
+        val idsString = sharedPrefs.getString("accounts_ids_list", "") ?: ""
+        if (idsString.isEmpty()) {
+            val defaultAcc = TradingAccount(
+                id = "acc_default",
+                name = accountName.value,
+                initialBalance = initialBalance.value
+            )
+            accountsList.value = listOf(defaultAcc)
+            sharedPrefs.edit()
+                .putString("accounts_ids_list", "acc_default")
+                .putString("acc_default_name", defaultAcc.name)
+                .putFloat("acc_default_balance", defaultAcc.initialBalance.toFloat())
+                .putString("active_account_id", "acc_default")
+                .apply()
+        } else {
+            val ids = idsString.split(",")
+            val list = mutableListOf<TradingAccount>()
+            for (id in ids) {
+                if (id.isNotEmpty()) {
+                    val name = sharedPrefs.getString("${id}_name", "") ?: ""
+                    val balance = sharedPrefs.getFloat("${id}_balance", 10000f).toDouble()
+                    if (name.isNotEmpty()) {
+                        list.add(TradingAccount(id, name, balance))
+                    }
+                }
+            }
+            if (list.isEmpty()) {
+                val defaultAcc = TradingAccount("acc_default", accountName.value, initialBalance.value)
+                list.add(defaultAcc)
+            }
+            accountsList.value = list
+        }
+    }
+
+    fun addAccount(name: String, balance: Double) {
+        val newId = "acc_" + System.currentTimeMillis()
+        val currentList = accountsList.value.toMutableList()
+        val newAcc = TradingAccount(newId, name, balance)
+        currentList.add(newAcc)
+        accountsList.value = currentList
+
+        val idsString = currentList.joinToString(",") { it.id }
+        sharedPrefs.edit()
+            .putString("accounts_ids_list", idsString)
+            .putString("${newId}_name", name)
+            .putFloat("${newId}_balance", balance.toFloat())
+            .apply()
+    }
+
+    fun updateAccountDetails(id: String, name: String, balance: Double) {
+        val currentList = accountsList.value.map {
+            if (it.id == id) it.copy(name = name, initialBalance = balance) else it
+        }
+        accountsList.value = currentList
+        sharedPrefs.edit()
+            .putString("${id}_name", name)
+            .putFloat("${id}_balance", balance.toFloat())
+            .apply()
+        
+        val activeId = sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default"
+        if (activeId == id) {
+            accountName.value = name
+            initialBalance.value = balance
+            sharedPrefs.edit()
+                .putString("account_name", name)
+                .putFloat("initial_balance", balance.toFloat())
+                .apply()
+        }
+    }
+
+    fun switchAccount(id: String) {
+        val account = accountsList.value.find { it.id == id } ?: return
+        sharedPrefs.edit().putString("active_account_id", id).apply()
+        initializeAccount(account.name, account.initialBalance)
+    }
+
+    fun deleteAccount(id: String) {
+        if (id == "acc_default") return
+        val currentList = accountsList.value.toMutableList()
+        currentList.removeAll { it.id == id }
+        accountsList.value = currentList
+
+        val idsString = currentList.joinToString(",") { it.id }
+        sharedPrefs.edit()
+            .putString("accounts_ids_list", idsString)
+            .remove("${id}_name")
+            .remove("${id}_balance")
+            .apply()
+        
+        val activeId = sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default"
+        if (activeId == id) {
+            val fallback = currentList.firstOrNull() ?: TradingAccount("acc_default", "حساب شخصی", 10000.0)
+            switchAccount(fallback.id)
+        }
     }
 
     fun setDailyGoal(goal: Double) {
@@ -721,5 +836,11 @@ data class TradeStats(
     val pnlBySymbol: Map<String, Double> = emptyMap(),
     val pnlByStrategy: Map<String, Double> = emptyMap(),
     val pnlByGrade: Map<String, Double> = emptyMap()
+)
+
+data class TradingAccount(
+    val id: String,
+    val name: String,
+    val initialBalance: Double
 )
 

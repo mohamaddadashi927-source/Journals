@@ -473,49 +473,6 @@ fun CalendarTab(
             }
         }
 
-        // Header for Trades list on selected day
-        item {
-            val formattedDate = selectedDayState?.let {
-                val sdf = if (language == "fa") SimpleDateFormat("yyyy/MM/dd", Locale("fa", "IR"))
-                          else SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                sdf.format(it.time)
-            } ?: ""
-
-            Text(
-                text = "${if (language == "fa") "معاملات تاریخ" else "Trades for"} $formattedDate",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        // Render trades of the day
-        if (selectedDayTrades.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (language == "fa") "هیچ معامله‌ای در این تاریخ ثبت نشده است." else "No trades executed on this date.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                }
-            }
-        } else {
-            items(selectedDayTrades, key = { it.id }) { trade ->
-                TradeItemRow(
-                    trade = trade,
-                    currencySymbol = currencySymbol,
-                    lang = language,
-                    onClick = { onNavigateToTradeDetail(trade.id) }
-                )
-            }
-        }
     }
 
     // Editor Sheet/Dialog for Daily Note
