@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.OpenBlue
@@ -35,9 +36,9 @@ import java.util.*
 
 @Composable
 fun PerformanceTab(viewModel: JournalViewModel) {
-    val stats by viewModel.statistics.collectAsState()
-    val language by viewModel.language.collectAsState()
-    val currency by viewModel.currency.collectAsState()
+    val stats by viewModel.statistics.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -1042,7 +1043,7 @@ private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third:
 
 @Composable
 fun AiInsightsSection(viewModel: JournalViewModel, lang: String, currencySymbol: String) {
-    val advancedStatsOpt by viewModel.advancedStats.collectAsState()
+    val advancedStatsOpt by viewModel.advancedStats.collectAsStateWithLifecycle()
     val stats = advancedStatsOpt ?: return
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {

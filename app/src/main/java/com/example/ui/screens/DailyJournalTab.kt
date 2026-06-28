@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.DailyJournal
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
@@ -28,8 +29,8 @@ import java.util.*
 
 @Composable
 fun DailyJournalTab(viewModel: JournalViewModel) {
-    val allJournals by viewModel.allDailyJournals.collectAsState()
-    val language by viewModel.language.collectAsState()
+    val allJournals by viewModel.allDailyJournals.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedJournalForEdit by remember { mutableStateOf<DailyJournal?>(null) }

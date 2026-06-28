@@ -1,7 +1,5 @@
 package com.example.ui.screens
 
-import android.app.DatePickerDialog
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,12 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
@@ -39,31 +40,17 @@ fun TradeListScreen(
     onNavigateToTradeDetail: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val context = LocalContext.current
-
-    val trades by viewModel.trades.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedMarket by viewModel.selectedMarket.collectAsState()
-    val selectedStatus by viewModel.selectedStatus.collectAsState()
-    val selectedTags by viewModel.selectedTags.collectAsState()
-    val startDate by viewModel.startDate.collectAsState()
-    val endDate by viewModel.endDate.collectAsState()
-    val sortType by viewModel.sortType.collectAsState()
-
-    val currency by viewModel.currency.collectAsState()
-    val markets by viewModel.allMarkets.collectAsState()
-    val tags by viewModel.allTags.collectAsState()
-    val language by viewModel.language.collectAsState()
-
-    var showFiltersPanel by remember { mutableStateOf(false) }
+    val trades by viewModel.trades.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val sortType by viewModel.sortType.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
         "USDT" -> "USDT"
         else -> "$"
     }
-
-    val sdf = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
 
     val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
 
@@ -72,28 +59,24 @@ fun TradeListScreen(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
-                        Text(Loc.tr("journal_book", language), fontWeight = FontWeight.Bold)
+                        Text(
+                            text = Loc.tr("trade_list", language),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = Loc.tr("back", language))
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { showFiltersPanel = !showFiltersPanel }) {
                             Icon(
-                                imageVector = if (showFiltersPanel) Icons.Default.FilterListOff else Icons.Default.FilterList,
-                                contentDescription = Loc.tr("advanced_filter", language),
-                                tint = if (selectedMarket != null || selectedStatus != null || selectedTags.isNotEmpty() || startDate != null || endDate != null) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onBackground
-                                }
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = Loc.tr("back", language),
+                                tint = Color.White
                             )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+                        containerColor = Color.Black
                     )
                 )
             }
@@ -101,35 +84,59 @@ fun TradeListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(Color.Black)
                     .padding(paddingValues)
             ) {
-                // 1. Text Search Bar & Sorting Quick Actions
+                // 1. Sleek Search & Sort Layout
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.searchQuery.value = it },
-                        placeholder = { Text(Loc.tr("search_placeholder_adv", language), fontSize = 12.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                        placeholder = {
+                            Text(
+                                text = if (language == "fa") "جستجو با نماد..." else if (language == "ar") "بحث بالرمز..." else "Search symbol...",
+                                fontSize = 13.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = Color(0xFF64748B)
+                            )
+                        },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = Loc.tr("clear_all", language), modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = Color(0xFF64748B)
+                                    )
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("trade_search_field"),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                            focusedContainerColor = Color(0xFF0C0E12),
+                            unfocusedContainerColor = Color(0xFF0C0E12),
+                            focusedBorderColor = Color(0xFF1F222B),
+                            unfocusedBorderColor = Color(0xFF1F222B),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
                         )
                     )
 
@@ -139,44 +146,50 @@ fun TradeListScreen(
                         IconButton(
                             onClick = { sortMenuExpanded = true },
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                                .background(Color(0xFF0C0E12), RoundedCornerShape(12.dp))
+                                .border(1.dp, Color(0xFF1F222B), RoundedCornerShape(12.dp))
                                 .size(56.dp)
+                                .testTag("trade_sort_button")
                         ) {
-                            Icon(Icons.Default.Sort, contentDescription = Loc.tr("sort_order", language))
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = Loc.tr("sort_order", language),
+                                tint = Color.White
+                            )
                         }
 
                         DropdownMenu(
                             expanded = sortMenuExpanded,
-                            onDismissRequest = { sortMenuExpanded = false }
+                            onDismissRequest = { sortMenuExpanded = false },
+                            modifier = Modifier.background(Color(0xFF0C0E12))
                         ) {
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_date_desc_text", language)) },
-                                leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null) },
+                                text = { Text(Loc.tr("sort_date_desc_text", language), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = Color.White) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_DESC
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_date_asc_text", language)) },
-                                leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null) },
+                                text = { Text(Loc.tr("sort_date_asc_text", language), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Color.White) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_ASC
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_pnl_desc_text", language)) },
-                                leadingIcon = { Icon(Icons.Default.TrendingUp, contentDescription = null, tint = EmeraldGreen) },
+                                text = { Text(Loc.tr("sort_pnl_desc_text", language), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color(0xFF10B981)) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_DESC
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_pnl_asc_text", language)) },
-                                leadingIcon = { Icon(Icons.Default.TrendingDown, contentDescription = null, tint = CrimsonRed) },
+                                text = { Text(Loc.tr("sort_pnl_asc_text", language), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.TrendingDown, contentDescription = null, tint = Color(0xFFEF4444)) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_ASC
                                     sortMenuExpanded = false
@@ -186,183 +199,7 @@ fun TradeListScreen(
                     }
                 }
 
-                // 2. Collapsible Advanced Filters panel
-                AnimatedVisibility(
-                    visible = showFiltersPanel,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                shape = RoundedCornerShape(24.dp)
-                            ),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(Loc.tr("advanced_filter_panel", language), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                TextButton(onClick = { viewModel.resetFilters() }) {
-                                    Text(Loc.tr("clear_all", language), fontSize = 12.sp)
-                                }
-                            }
-
-                            // A. Status filter chips
-                            Column {
-                                Text(Loc.tr("trade_status", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf("WIN" to Loc.tr("win_status", language), "LOSS" to Loc.tr("loss_status", language), "OPEN" to Loc.tr("open_status", language)).forEach { pair ->
-                                        val isSelected = selectedStatus == pair.first
-                                        FilterChip(
-                                            selected = isSelected,
-                                            onClick = {
-                                                viewModel.selectedStatus.value = if (isSelected) null else pair.first
-                                            },
-                                            label = { Text(pair.second, fontSize = 10.sp) },
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            // B. Market selection filter chips
-                            Column {
-                                Text(Loc.tr("markets_filter", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    markets.forEach { m ->
-                                        val isSelected = selectedMarket == m.name
-                                        FilterChip(
-                                            selected = isSelected,
-                                            onClick = {
-                                                viewModel.selectedMarket.value = if (isSelected) null else m.name
-                                            },
-                                            label = { Text(m.name, fontSize = 10.sp) },
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            // C. Strategy tag filter chips
-                            if (tags.isNotEmpty()) {
-                                Column {
-                                    Text(Loc.tr("tags_filter", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        tags.forEach { t ->
-                                            val isSelected = t.name in selectedTags
-                                            FilterChip(
-                                                selected = isSelected,
-                                                onClick = {
-                                                    val current = selectedTags.toMutableSet()
-                                                    if (isSelected) current.remove(t.name) else current.add(t.name)
-                                                    viewModel.selectedTags.value = current
-                                                },
-                                                label = { Text(t.name, fontSize = 10.sp) },
-                                                shape = RoundedCornerShape(8.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // D. Date Range Selection
-                            Column {
-                                Text(Loc.tr("date_range", language), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    // Start Date Chip
-                                    OutlinedButton(
-                                        onClick = {
-                                            val calendar = Calendar.getInstance()
-                                            startDate?.let { calendar.timeInMillis = it }
-                                            DatePickerDialog(
-                                                context,
-                                                { _, year, month, day ->
-                                                    calendar.set(year, month, day)
-                                                    viewModel.startDate.value = calendar.timeInMillis
-                                                },
-                                                calendar.get(Calendar.YEAR),
-                                                calendar.get(Calendar.MONTH),
-                                                calendar.get(Calendar.DAY_OF_MONTH)
-                                            ).show()
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            text = if (startDate != null) {
-                                                val prefix = if (language == "fa") "از: " else if (language == "ar") "من: " else "From: "
-                                                "$prefix${sdf.format(Date(startDate!!))}"
-                                            } else {
-                                                Loc.tr("start_date", language)
-                                            },
-                                            fontSize = 11.sp
-                                        )
-                                    }
-
-                                    // End Date Chip
-                                    OutlinedButton(
-                                        onClick = {
-                                            val calendar = Calendar.getInstance()
-                                            endDate?.let { calendar.timeInMillis = it }
-                                            DatePickerDialog(
-                                                context,
-                                                { _, year, month, day ->
-                                                    calendar.set(year, month, day)
-                                                    viewModel.endDate.value = calendar.timeInMillis
-                                                },
-                                                calendar.get(Calendar.YEAR),
-                                                calendar.get(Calendar.MONTH),
-                                                calendar.get(Calendar.DAY_OF_MONTH)
-                                            ).show()
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            text = if (endDate != null) {
-                                                val prefix = if (language == "fa") "تا: " else if (language == "ar") "إلى: " else "To: "
-                                                "$prefix${sdf.format(Date(endDate!!))}"
-                                            } else {
-                                                Loc.tr("end_date", language)
-                                            },
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 3. Trades list
+                // 2. Trades list
                 if (trades.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -375,15 +212,16 @@ fun TradeListScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                Icons.Default.Inventory,
+                                imageVector = Icons.Default.Inbox,
                                 contentDescription = null,
                                 modifier = Modifier.size(56.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                tint = Color(0xFF475569)
                             )
                             Text(
-                                Loc.tr("no_trades_match", language),
+                                text = Loc.tr("no_trades_match", language),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                color = Color(0xFF64748B),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -393,16 +231,135 @@ fun TradeListScreen(
                             .fillMaxSize()
                             .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
+                        contentPadding = PaddingValues(top = 4.dp, bottom = 32.dp)
                     ) {
                         items(trades, key = { it.id }) { trade ->
-                            TradeItemRow(
+                            ImprovedTradeRow(
                                 trade = trade,
                                 currencySymbol = currencySymbol,
                                 lang = language,
                                 onClick = { onNavigateToTradeDetail(trade.id) }
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ImprovedTradeRow(
+    trade: Trade,
+    currencySymbol: String,
+    lang: String,
+    onClick: () -> Unit
+) {
+    val isClosed = trade.exitPrice != null
+    val pnl = trade.pnl ?: 0.0
+    val isProfit = pnl >= 0.0
+
+    val trendColor = when {
+        !isClosed -> Color(0xFF3B82F6) // OpenBlue
+        isProfit -> Color(0xFF10B981) // EmeraldGreen
+        else -> Color(0xFFEF4444) // CrimsonRed
+    }
+
+    val sdf = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .testTag("trade_list_item_${trade.id}"),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF0C0E12)
+        ),
+        border = BorderStroke(1.dp, Color(0xFF1F222B))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // A. Vertical Color Indicator Bar
+            Box(
+                modifier = Modifier
+                    .width(6.dp)
+                    .fillMaxHeight()
+                    .background(trendColor)
+            )
+
+            // B. Content details with high-contrast spacing and alignment
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left side: Symbol (Market) and Date
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = trade.market,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                    
+                    Text(
+                        text = sdf.format(Date(trade.dateTime)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF64748B),
+                        fontSize = 12.sp
+                    )
+                }
+
+                // Right side: Profit/Loss and Side Badge
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // PnL or Open status text
+                    val pnlText = if (isClosed) {
+                        val prefix = if (pnl > 0.0) "+" else ""
+                        "$prefix${String.format(Locale.US, "%,.2f", pnl)} $currencySymbol"
+                    } else {
+                        if (lang == "fa") "باز" else if (lang == "ar") "مفتوحة" else "OPEN"
+                    }
+                    Text(
+                        text = pnlText,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = trendColor,
+                        fontSize = 16.sp
+                    )
+
+                    // Side (BUY/SELL) badge
+                    val sideText = if (trade.side == "BUY") {
+                        if (lang == "fa") "خرید" else if (lang == "ar") "شراء" else "BUY"
+                    } else {
+                        if (lang == "fa") "فروش" else if (lang == "ar") "بيع" else "SELL"
+                    }
+                    val sideColor = if (trade.side == "BUY") Color(0xFF10B981) else Color(0xFFEF4444)
+                    
+                    Box(
+                        modifier = Modifier
+                            .background(sideColor.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = sideText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = sideColor,
+                            fontSize = 10.sp
+                        )
                     }
                 }
             }

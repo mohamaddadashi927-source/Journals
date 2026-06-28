@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
@@ -75,10 +76,10 @@ fun AddEditTradeScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val language by viewModel.language.collectAsState()
+    val language by viewModel.language.collectAsStateWithLifecycle()
 
-    val markets by viewModel.allMarkets.collectAsState()
-    val tags by viewModel.allTags.collectAsState()
+    val markets by viewModel.allMarkets.collectAsStateWithLifecycle()
+    val tags by viewModel.allTags.collectAsStateWithLifecycle()
 
     // Form fields states
     var side by remember { mutableStateOf("BUY") } // "BUY" or "SELL"
@@ -748,7 +749,7 @@ fun AddEditTradeScreen(
                     }
 
                     // Pre-trade Checklist template
-                    val checklistTemplateItems by viewModel.allChecklistItems.collectAsState()
+                    val checklistTemplateItems by viewModel.allChecklistItems.collectAsStateWithLifecycle()
                     if (checklistTemplateItems.isNotEmpty()) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

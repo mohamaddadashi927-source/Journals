@@ -29,8 +29,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
 import com.example.ui.components.EquityCurveChart
 import com.example.ui.theme.CrimsonRed
@@ -52,14 +55,14 @@ fun DashboardScreen(
     onNavigateToTradeList: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
-    val trades by viewModel.trades.collectAsState()
-    val stats by viewModel.statistics.collectAsState()
-    val currency by viewModel.currency.collectAsState()
-    val language by viewModel.language.collectAsState()
-    val initialBalance by viewModel.initialBalance.collectAsState()
-    val accountName by viewModel.accountName.collectAsState()
-    val isAccountInitialized by viewModel.isAccountInitialized.collectAsState()
-    val allJournals by viewModel.allDailyJournals.collectAsState()
+    val trades by viewModel.trades.collectAsStateWithLifecycle()
+    val stats by viewModel.statistics.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val initialBalance by viewModel.initialBalance.collectAsStateWithLifecycle()
+    val accountName by viewModel.accountName.collectAsStateWithLifecycle()
+    val isAccountInitialized by viewModel.isAccountInitialized.collectAsStateWithLifecycle()
+    val allJournals by viewModel.allDailyJournals.collectAsStateWithLifecycle()
 
     var activeTab by remember { mutableStateOf(0) } // 0: Dashboard, 1: Calendar, 2: Analysis, 3: Journal, 4: Goals
     var showDailyReviewDialog by remember { mutableStateOf(false) }
@@ -170,7 +173,9 @@ fun DashboardScreen(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+                        containerColor = if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background,
+                        titleContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground
                     )
                 )
             },
@@ -187,7 +192,7 @@ fun DashboardScreen(
             },
             bottomBar = {
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
                     modifier = Modifier.clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 ) {
                     NavigationBarItem(
@@ -226,133 +231,525 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
             ) {
                 when (activeTab) {
                     0 -> {
+                        val labels = remember(language) {
+                            object {
+                                val welcome = if (language == "fa") "خوش‌آمدید،" else if (language == "ar") "مرحباً،" else "Welcome back,"
+                                val keyMetrics = if (language == "fa") "شاخص‌های عملکردی کلیدی" else if (language == "ar") "المؤشرات الرئيسية" else "Key Performance Metrics"
+                                val netPnl = if (language == "fa") "سود / زیان خالص" else if (language == "ar") "صافي الربح والخسارة" else "Net Profit / Loss"
+                                val winRate = if (language == "fa") "وین‌ریت (درصد برد)" else if (language == "ar") "نسبة الفوز" else "Win Rate"
+                                val profitFactor = if (language == "fa") "ضریب سود (Profit Factor)" else if (language == "ar") "عامل الربح" else "Profit Factor"
+                                val keyInsight = if (language == "fa") "بینش برجسته مربی هوشمند" else if (language == "ar") "رؤية المدرب الذكي المميزة" else "Highlighted Coach Insight"
+                                val dailySummary = if (language == "fa") "خلاصه معاملات امروز" else if (language == "ar") "ملخص صفقات اليوم" else "Today's Daily Summary"
+                                val tradesToday = if (language == "fa") "تعداد معاملات امروز" else if (language == "ar") "صفقات اليوم" else "Trades Today"
+                                val todayResult = if (language == "fa") "برآیند سود/زیان خالص امروز" else if (language == "ar") "النتيجة الصافية اليوم" else "Today's Net Result"
+                                val noTrades = if (language == "fa") "هیچ معامله‌ای برای امروز ثبت نشده است." else if (language == "ar") "لم يتم تسجيل أي صفقات اليوم." else "No trades registered for today."
+                                val noInsightTitle = if (language == "fa") "داده‌های معاملاتی ناکافی" else if (language == "ar") "بيانات تداول غير كافية" else "Insufficient Trading Data"
+                                val noInsightDesc = if (language == "fa") "حداقل ۳ معامله ثبت کنید تا تحلیل‌های هوشمند رفتار معاملاتی و مربی روانشناسی فعال شود." else if (language == "ar") "سجل ٣ صفقات على الأقل لتفعيل التحليلات الذكية للأداء." else "Log at least 3 trades to unlock personalized, AI-driven behavior insights."
+                                val tradesUnit = if (language == "fa") "معامله" else if (language == "ar") "صفقة" else "trades"
+                            }
+                        }
+
+                        val advancedStatsOpt by viewModel.advancedStats.collectAsStateWithLifecycle()
+
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            contentPadding = PaddingValues(vertical = 16.dp)
                         ) {
-                            // Key Portfolio Stat Highlights
+                            // 0. Trader Personality Profile Card (Dynamic classification)
                             item {
-                                PortfolioSummaryCard(
-                                    stats = stats,
-                                    currencySymbol = currencySymbol,
-                                    initialBalance = initialBalance,
-                                    lang = language
-                                )
-                            }
+                                val profile = advancedStatsOpt?.traderProfile
+                                val profileLabels = remember(language) {
+                                    object {
+                                        val sectionTitle = if (language == "fa") "پروفایل روانشناسی معامله‌گر" else if (language == "ar") "ملف السلوك النفسي للمتداول" else "Trader Psychology Profile"
+                                        val dominantTraitLabel = if (language == "fa") "ویژگی غالب:" else if (language == "ar") "السمة الغالبة:" else "Dominant Trait:"
+                                        val suggestionLabel = if (language == "fa") "توصیه مربی روانشناسی:" else if (language == "ar") "توصية المدرب النفسي:" else "Coach Suggestion:"
+                                        val emptyTitle = if (language == "fa") "تحلیل پروفایل روانشناسی" else if (language == "ar") "تحليل السلوك النفسي" else "Psychology Profile Analysis"
+                                        val emptyDesc = if (language == "fa") "برای فعال شدن تحلیل روانشناسی و تعیین پروفایل معاملاتی خود، حداقل ۱ معامله ثبت کنید." else if (language == "ar") "سجل صفقة واحدة على الأقل لتفعيل التحليل النفسي وتحديد نوع تداولك." else "Log at least 1 trade to analyze your psychological profile and behavior traits."
+                                    }
+                                }
 
-                            // Equity Curve
-                            item {
-                                EquityCurveChart(
-                                    trades = trades,
-                                    currencySymbol = currencySymbol,
-                                    initialBalance = initialBalance,
-                                    lang = language,
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(260.dp)
-                                )
-                            }
-
-                            // AI Smart Coach Summary
-                            item {
-                                DashboardAiSummaryCard(
-                                    viewModel = viewModel,
-                                    lang = language,
-                                    onNavigateToAnalysis = { activeTab = 2 }
-                                )
-                            }
-
-                            // Daily Review Mode Trigger Card
-                            item {
-                                DailyReviewTriggerCard(
-                                    trades = trades,
-                                    journals = allJournals,
-                                    lang = language,
-                                    currencySymbol = currencySymbol,
-                                    onClick = { showDailyReviewDialog = true }
-                                )
-                            }
-
-                            // Stats Grid
-                            item {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        .testTag("trader_profile_card"),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF0C0E12)
+                                    ),
+                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
                                 ) {
-                                    StatSmallCard(
-                                        title = if (language == "fa") "بیشترین سود" else if (language == "ar") "أقصى ربح" else "Max Profit",
-                                        value = "${if (stats.maxProfit >= 0.0) "+" else ""}${String.format(Locale.US, "%,.1f", stats.maxProfit)} $currencySymbol",
-                                        icon = Icons.Default.TrendingUp,
-                                        color = EmeraldGreen,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    StatSmallCard(
-                                        title = if (language == "fa") "بیشترین ضرر" else if (language == "ar") "أقصى خسارة" else "Max Loss",
-                                        value = "${String.format(Locale.US, "%,.1f", stats.maxLoss)} $currencySymbol",
-                                        icon = Icons.Default.TrendingDown,
-                                        color = CrimsonRed,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        if (profile != null) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(48.dp)
+                                                        .background(
+                                                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                                                            shape = CircleShape
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    val icon = when (profile.iconName) {
+                                                        "warning" -> Icons.Default.Warning
+                                                        "speed" -> Icons.Default.Speed
+                                                        "verified_user" -> Icons.Default.VerifiedUser
+                                                        "my_location" -> Icons.Default.MyLocation
+                                                        else -> Icons.Default.TrendingUp
+                                                    }
+                                                    val iconColor = when (profile.iconName) {
+                                                        "warning" -> CrimsonRed
+                                                        "speed" -> Color(0xFFF59E0B)
+                                                        "verified_user" -> EmeraldGreen
+                                                        "my_location" -> OpenBlue
+                                                        else -> Color(0xFF94A3B8)
+                                                    }
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = null,
+                                                        tint = iconColor,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                }
+
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = profileLabels.sectionTitle,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFF64748B),
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = profile.title,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Black,
+                                                        color = Color.White
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text(
+                                                text = profile.description,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color(0xFF94A3B8),
+                                                lineHeight = 18.sp
+                                            )
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = profileLabels.dominantTraitLabel,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Surface(
+                                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = profile.dominantTrait,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            HorizontalDivider(color = Color(0xFF1F222B))
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            Text(
+                                                text = profileLabels.suggestionLabel,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color(0xFF10B981),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = profile.suggestion,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFFCBD5E1),
+                                                lineHeight = 16.sp
+                                            )
+                                        } else {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(48.dp)
+                                                        .background(
+                                                            color = Color(0xFF1F222B),
+                                                            shape = CircleShape
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Info,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF64748B),
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                }
+
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = profileLabels.emptyTitle,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White
+                                                    )
+                                                    Text(
+                                                        text = profileLabels.emptyDesc,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color(0xFF64748B),
+                                                        lineHeight = 16.sp
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            // Recent Trades Section Header
+                            // 1. Key Metrics Card
                             item {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("key_metrics_card"),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF0C0E12)
+                                    ),
+                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
                                 ) {
-                                    Text(
-                                        text = if (language == "fa") "آخرین معاملات" else if (language == "ar") "آخر صفقات" else "Latest Trades",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                    TextButton(onClick = onNavigateToTradeList) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(if (language == "fa") "مشاهده همه" else if (language == "ar") "عرض الكل" else "View All")
-                                            Spacer(modifier = Modifier.width(4.dp))
+                                    Column(
+                                        modifier = Modifier.padding(20.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = labels.keyMetrics,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF94A3B8)
+                                            )
                                             Icon(
-                                                Icons.AutoMirrored.Filled.TrendingFlat,
+                                                imageVector = Icons.Default.Analytics,
                                                 contentDescription = null,
-                                                modifier = Modifier.size(16.dp)
+                                                tint = Color(0xFF94A3B8),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(24.dp))
+
+                                        Text(
+                                            text = labels.netPnl,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color(0xFF64748B),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        val isProfit = stats.totalPnL >= 0.0
+                                        val pnlColor = if (stats.totalPnL > 0.0) Color(0xFF10B981) else if (stats.totalPnL < 0.0) Color(0xFFEF4444) else Color.White
+                                        val pnlPrefix = if (stats.totalPnL > 0.0) "+" else ""
+                                        Text(
+                                            text = "$pnlPrefix${String.format(Locale.US, "%,.2f", stats.totalPnL)} $currencySymbol",
+                                            style = MaterialTheme.typography.headlineLarge,
+                                            fontWeight = FontWeight.Black,
+                                            color = pnlColor,
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                        HorizontalDivider(color = Color(0xFF1F222B))
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceAround
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(
+                                                    text = labels.winRate,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "${String.format(Locale.US, "%.1f", stats.winRate)}%",
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF10B981)
+                                                )
+                                            }
+
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(
+                                                    text = labels.profitFactor,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                val pfColor = if (stats.profitFactor >= 1.5) Color(0xFFF59E0B) else if (stats.profitFactor >= 1.0) Color(0xFF3B82F6) else Color(0xFFEF4444)
+                                                Text(
+                                                    text = String.format(Locale.US, "%.2f", stats.profitFactor),
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = pfColor
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 2. Highlighted Key Insight Card
+                            item {
+                                val primaryInsight = advancedStatsOpt?.insights?.firstOrNull()
+
+                                if (primaryInsight != null) {
+                                    val (themeColor, insightIcon) = when (primaryInsight.type) {
+                                        com.example.data.analysis.InsightType.POSITIVE -> Color(0xFF10B981) to "🎯"
+                                        com.example.data.analysis.InsightType.NEGATIVE -> Color(0xFFEF4444) to "⚠️"
+                                        com.example.data.analysis.InsightType.WARNING -> Color(0xFFF59E0B) to "⚡"
+                                        com.example.data.analysis.InsightType.INFO -> Color(0xFF3B82F6) to "💡"
+                                    }
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("key_insight_card"),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(0xFF0C0E12)
+                                        ),
+                                        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.4f))
+                                    ) {
+                                        Column(modifier = Modifier.padding(20.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(text = insightIcon, fontSize = 18.sp)
+                                                    Text(
+                                                        text = labels.keyInsight,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColor
+                                                    )
+                                                }
+                                                Surface(
+                                                    color = themeColor.copy(alpha = 0.1f),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (language == "fa") "ویژه" else if (language == "ar") "مميز" else "HIGHLIGHTED",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = themeColor,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                        fontSize = 9.sp
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            Text(
+                                                text = primaryInsight.title,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+
+                                            Spacer(modifier = Modifier.height(6.dp))
+
+                                            Text(
+                                                text = primaryInsight.description,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color(0xFF94A3B8),
+                                                lineHeight = 20.sp
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("key_insight_empty_card"),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(0xFF0C0E12)
+                                        ),
+                                        border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(20.dp),
+                                            horizontalAlignment = Alignment.Start
+                                        ) {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(text = "💡", fontSize = 18.sp)
+                                                Text(
+                                                    text = labels.noInsightTitle,
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF64748B)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            Text(
+                                                text = labels.noInsightDesc,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color(0xFF475569),
+                                                lineHeight = 18.sp
                                             )
                                         }
                                     }
                                 }
                             }
 
-                            // List of 5 recent trades
-                            if (recentTrades.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 32.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = if (language == "fa") "هیچ معامله‌ای ثبت نشده است." else if (language == "ar") "لم يتم تسجيل أي صفقة بعد." else "No trades registered yet.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                        )
-                                    }
+                            // 3. Simple Daily Summary Card
+                            item {
+                                val todayStats = remember(trades) {
+                                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                                    val todayStr = sdf.format(Date())
+                                    val todayClosed = trades.filter { t -> sdf.format(Date(t.dateTime)) == todayStr && t.exitPrice != null }
+                                    val todayAll = trades.filter { t -> sdf.format(Date(t.dateTime)) == todayStr }
+                                    val pnl = todayClosed.sumOf { it.pnl ?: 0.0 }
+                                    val count = todayAll.size
+                                    Pair(count, pnl)
                                 }
-                            } else {
-                                items(recentTrades, key = { it.id }) { trade ->
-                                    TradeItemRow(
-                                        trade = trade,
-                                        currencySymbol = currencySymbol,
-                                        lang = language,
-                                        onClick = { onNavigateToTradeDetail(trade.id) }
-                                    )
+                                val todayCount = todayStats.first
+                                val todayPnl = todayStats.second
+
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showDailyReviewDialog = true }
+                                        .testTag("daily_summary_card"),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF0C0E12)
+                                    ),
+                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                ) {
+                                    Column(modifier = Modifier.padding(20.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = labels.dailySummary,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF94A3B8)
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Default.CalendarMonth,
+                                                contentDescription = null,
+                                                tint = Color(0xFF3B82F6),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column {
+                                                Text(
+                                                    text = labels.tradesToday,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "$todayCount ${labels.tradesUnit}",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                Text(
+                                                    text = labels.todayResult,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                val resultColor = if (todayPnl > 0.0) Color(0xFF10B981) else if (todayPnl < 0.0) Color(0xFFEF4444) else Color.White
+                                                val resultPrefix = if (todayPnl > 0.0) "+" else ""
+                                                Text(
+                                                    text = "$resultPrefix${String.format(Locale.US, "%,.2f", todayPnl)} $currencySymbol",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = resultColor
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        HorizontalDivider(color = Color(0xFF1F222B))
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = if (language == "fa") "مشاهده بازنگری روزانه تفصیلی ➔" else if (language == "ar") "عرض المراجعة اليومية التفصيلية ➔" else "View Detailed Daily Review ➔",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFF3B82F6),
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
@@ -707,7 +1104,7 @@ fun TradeItemRow(
 
 @Composable
 fun DashboardAiSummaryCard(viewModel: JournalViewModel, lang: String, onNavigateToAnalysis: () -> Unit) {
-    val advancedStatsOpt by viewModel.advancedStats.collectAsState()
+    val advancedStatsOpt by viewModel.advancedStats.collectAsStateWithLifecycle()
     val stats = advancedStatsOpt ?: return
 
     val score = stats.disciplineScore

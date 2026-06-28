@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
 import com.example.ui.theme.EmeraldGreen
@@ -58,16 +59,16 @@ fun TradeDetailScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val tradeState = viewModel.getTradeById(tradeId).collectAsState(initial = null)
+    val tradeState = viewModel.getTradeById(tradeId).collectAsStateWithLifecycle(initialValue = null)
     val trade = tradeState.value
 
-    val currency by viewModel.currency.collectAsState()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
         "USDT" -> "USDT"
         else -> "$"
     }
-    val language by viewModel.language.collectAsState()
+    val language by viewModel.language.collectAsStateWithLifecycle()
 
     var showPostTradeDialog by remember { mutableStateOf(false) }
     var postNotesInput by remember { mutableStateOf("") }

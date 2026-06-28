@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.ChecklistItem
 import com.example.ui.util.Loc
 import com.example.ui.theme.CrimsonRed
@@ -30,10 +31,10 @@ import java.util.*
 
 @Composable
 fun GoalsTab(viewModel: JournalViewModel) {
-    val trades by viewModel.trades.collectAsState()
-    val checklistItems by viewModel.allChecklistItems.collectAsState()
-    val language by viewModel.language.collectAsState()
-    val currency by viewModel.currency.collectAsState()
+    val trades by viewModel.trades.collectAsStateWithLifecycle()
+    val checklistItems by viewModel.allChecklistItems.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -42,9 +43,9 @@ fun GoalsTab(viewModel: JournalViewModel) {
     }
 
     // Goals settings values
-    val dailyGoalVal by viewModel.dailyGoal.collectAsState()
-    val weeklyGoalVal by viewModel.weeklyGoal.collectAsState()
-    val monthlyGoalVal by viewModel.monthlyGoal.collectAsState()
+    val dailyGoalVal by viewModel.dailyGoal.collectAsStateWithLifecycle()
+    val weeklyGoalVal by viewModel.weeklyGoal.collectAsStateWithLifecycle()
+    val monthlyGoalVal by viewModel.monthlyGoal.collectAsStateWithLifecycle()
 
     // Goals target editors states
     var showEditGoalsDialog by remember { mutableStateOf(false) }

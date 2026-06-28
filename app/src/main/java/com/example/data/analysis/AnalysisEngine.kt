@@ -492,7 +492,7 @@ object AnalysisEngine {
     }
     
     private fun generateTraderProfile(context: RuleContext, lang: String): TraderProfile? {
-        if (context.totalTrades < 3) return null
+        if (context.totalTrades < 1) return null
         
         val score = context.disciplineScore
         val winRate = context.winRate
@@ -515,85 +515,85 @@ object AnalysisEngine {
         }
         val checklistAdherence = if (totalChecklist > 0) checkedChecklist.toDouble() / totalChecklist else 0.0
 
+        val isRevenge = context.revengeTradingDetected || score < 50 || context.losingStreak >= 4
+        val isOvertrader = avgTradesPerDay > 5.0 || (context.totalTrades >= 5 && avgTradesPerDay > 4.0)
+        val isRiskAverse = (context.maxDrawdown < 4.0 && context.totalTrades >= 3) || (checklistAdherence >= 0.85 && context.totalTrades >= 3)
+        val isDisciplined = score >= 75 && checklistAdherence >= 0.65
+
         return when {
-            // Revenge / FOMO Trader profile
-            context.revengeTradingDetected || score < 50 -> {
+            isRevenge -> {
                 TraderProfile(
-                    title = if (lang == "fa") "معامله‌گر احساساتی و واکنشی (FOMO / Revenge)" 
-                            else if (lang == "ar") "متداول عاطفي وانفعالي (الانتقام/الفومو)" 
-                            else "FOMO & Revenge Trader",
-                    description = if (lang == "fa") "شما تمایل دارید پس از ضرر، به سرعت وارد معاملات انتقامی شوید یا از روی ترس جاماندن از بازار (FOMO) معامله کنید. انضباط معاملاتی شما نیاز به بازنگری جدی دارد."
-                                  else if (lang == "ar") "تميل إلى الدخول في صفقات انتقامية سريعة بعد الخسارة أو التداول بسبب الخوف من فوات الفرصة (FOMO). مستوى انضباطك يحتاج إلى إعادة تقييم."
-                                  else "You tend to enter quick emotional trades immediately following a loss, or jump into positions due to fear of missing out (FOMO).",
-                    dominantTrait = if (lang == "fa") "ترید احساساتی و شتاب‌زده" else if (lang == "ar") "التداول العاطفي والانفعالي" else "Emotional impulsivity",
+                    title = if (lang == "fa") "معامله‌گر انتقام‌جو (Revenge Trader)" 
+                            else if (lang == "ar") "متداول انتقامي (Revenge Trader)" 
+                            else "Revenge Trader",
+                    description = if (lang == "fa") "شما تمایل دارید پس از ضرر، به سرعت وارد معاملات احساسی و انتقامی شوید تا زیان خود را جبران کنید. این امر منجر به افت شدید انضباط معاملاتی شما می‌شود."
+                                  else if (lang == "ar") "تميل إلى الدخول في صفقات انتقامية وعاطفية سريعة بعد الخسارة لتعويض خسائرك، مما يضر بانضباطك العام."
+                                  else "You tend to enter emotional and impulsive trades immediately following a loss, attempting to force profits back from the market.",
+                    dominantTrait = if (lang == "fa") "ترید انتقامی و احساسی" else if (lang == "ar") "التداول الانتقامي والعاطفي" else "Emotional & Revenge Trading",
                     iconName = "warning",
-                    suggestion = if (lang == "fa") "بعد از هر ضرر، حداقل ۲ ساعت چارت را ببندید. هرگز بدون تیک زدن چک‌لیست قبل از ورود، ترید نکنید."
-                                 else if (lang == "ar") "أغلق الشاشة لمدة ساعتين على الأقل بعد أي خسارة. لا تتداول أبداً دون تفعيل قائمة مراجعة ما قبل الدخول."
-                                 else "Close your trading terminal for at least 2 hours after a losing trade. Practice strict checklist adherence."
+                    suggestion = if (lang == "fa") "بعد از هر ضرر، حداقل ۲ ساعت چارت را ببندید. حتماً قبل از ورود چک‌لیست خود را پر کنید."
+                                 else if (lang == "ar") "أغلق الشاشة لمدة ساعتين على الأقل بعد أي خسارة. التزم بقائمة المراجعة قبل دخول الصفقة."
+                                 else "Shut down your platform for at least 2 hours after any loss. Enforce strict pre-trade checklist usage."
                 )
             }
-            // Aggressive Scalper / Overtrader profile
-            avgTradesPerDay > 5.0 -> {
+            isOvertrader -> {
                 TraderProfile(
-                    title = if (lang == "fa") "اسکالپر پرکار و پرریسک (Aggressive Scalper)" 
-                            else if (lang == "ar") "مضارب يومي مفرط (Aggressive Scalper)" 
-                            else "Aggressive Scalper & Overtrader",
-                    description = if (lang == "fa") "حجم و تعداد معاملات روزانه شما بسیار بالاست (میانگین: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} ترید در روز). این رویکرد ریسک و خستگی ذهنی شما را به شدت افزایش می‌دهد."
-                                  else if (lang == "ar") "حجم وتكرار صفقاتك اليومية مرتفع جداً (المتوسط: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} صفقات يومياً). هذا يزيد من التشتت والعمولات."
-                                  else "You trade with exceptionally high frequency (average: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} trades per day), which increases commission drag and cognitive fatigue.",
-                    dominantTrait = if (lang == "fa") "تعداد بالای معاملات روزانه" else if (lang == "ar") "كثرة الصفقات اليومية" else "High transaction frequency",
+                    title = if (lang == "fa") "معامله‌گر بیش‌فعال (Overtrader)" 
+                            else if (lang == "ar") "متداول مفرط (Overtrader)" 
+                            else "Overtrader",
+                    description = if (lang == "fa") "شما تعداد بسیار زیادی معامله ثبت می‌کنید (میانگین: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} ترید در روز). این رفتار باعث خستگی ذهنی، افزایش کارمزد و کاهش تمرکز روی معاملات با کیفیت می‌شود."
+                                  else if (lang == "ar") "تتداول بمعدل مرتفع جداً (المتوسط: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} صفقات يومياً)، مما يسبب الإرهاق الذهني وزيادة العمولات."
+                                  else "You trade with exceptionally high frequency (average: ${String.format(Locale.US, "%.1f", avgTradesPerDay)} trades per day), leading to cognitive fatigue, high transaction fees, and lower quality setups.",
+                    dominantTrait = if (lang == "fa") "تعداد بالای معاملات روزانه" else if (lang == "ar") "كثرة الصفقات اليومية" else "High Transaction Frequency",
                     iconName = "speed",
-                    suggestion = if (lang == "fa") "سقف معاملاتی روزانه (حداکثر ۳ ترید) برای خود تعیین کنید و پس از رسیدن به آن، معاملات را متوقف کنید."
-                                 else if (lang == "ar") "ضع حداً أقصى لا يتجاوز ۳ صفقات يومياً، وتوقف فوراً بعد الوصول إليه مهما كانت الفرص."
+                    suggestion = if (lang == "fa") "یک سقف روزانه مشخص (مثلاً حداکثر ۳ ترید) تنظیم کنید و پس از رسیدن به آن، معاملات را متوقف کنید."
+                                 else if (lang == "ar") "ضع حداً أقصى لا يتجاوز ٣ صفقات يومياً وتوقف تماماً فور الوصول إليه."
                                  else "Enforce a maximum daily limit of 3 trades. Once reached, close all charts for the day."
                 )
             }
-            // Disciplined Planner profile
-            score >= 80 && checklistAdherence > 0.70 && winRate >= 45.0 -> {
+            isRiskAverse -> {
                 TraderProfile(
-                    title = if (lang == "fa") "معامله‌گر منظم و استراتژیک (Disciplined Planner)" 
-                            else if (lang == "ar") "متداول منظم واستراتيجي (Disciplined Planner)" 
-                            else "Disciplined & Strategic Planner",
-                    description = if (lang == "fa") "آمار نشان می‌دهد شما با انضباط فوق‌العاده بالا ($score/100) ترید می‌کنید، به چک‌لیست وفادار هستید و تصمیمات استراتژیک می‌گیرید. شما الگوی یک تریدر حرفه‌ای هستید."
-                                  else if (lang == "ar") "تظهر الإحصاءات أنك تتداول بانضباط عالٍ جداً ($score/100)، وتلتزم بالخطة وتتخذ قرارات استراتيجية مدروسة."
-                                  else "You execute with exceptional discipline ($score/100), follow your checklist strictly, and maintain high strategic planning.",
-                    dominantTrait = if (lang == "fa") "پایبندی کامل به قوانین" else if (lang == "ar") "الالتزام الكامل بالقوانين" else "Strict rule adherence",
+                    title = if (lang == "fa") "معامله‌گر ریسک‌گریز (Risk-Averse Trader)" 
+                            else if (lang == "ar") "متداول حذر للغاية (Risk-Averse Trader)" 
+                            else "Risk-Averse Trader",
+                    description = if (lang == "fa") "شما اولویت بالایی برای حفظ سرمایه قائل هستید، افت حساب بسیار کمی دارید و با وسواس زیادی وارد معاملات می‌شوید."
+                                  else if (lang == "ar") "تعطي الأولوية القصوى للحفاظ على رأس المال، ولديك تراجع منخفض جداً في الحساب وتختار صفقاتك بحذر شديد."
+                                  else "You prioritize capital preservation above all else, keeping drawdowns exceptionally low and executing only high-probability setups.",
+                    dominantTrait = if (lang == "fa") "کنترل شدید ریسک و ضرر" else if (lang == "ar") "التحكم الصارم بالمخاطر" else "Capital Preservation & Low Risk",
                     iconName = "verified_user",
-                    suggestion = if (lang == "fa") "عالی است! همین مسیر منظم را با مدیریت مستمر حجم معاملات برای سود مرکب ادامه دهید."
-                                 else if (lang == "ar") "رائع جداً! استمر في هذا المسار مع التركيز على زيادة حجم التداولات تدريجياً لتعظيم العائد."
-                                 else "Superb! Maintain this system and slowly compound your account balance by optimizing position sizes."
+                    suggestion = if (lang == "fa") "کنترل ریسک شما فوق‌العاده است. سعی کنید در موقعیت‌های ایده‌آل و با کیفیت بالا، حجم ترید را کمی افزایش دهید."
+                                 else if (lang == "ar") "إدارتك للمخاطر ممتازة. فكر في زيادة حجم الصفقة قليلاً عند توفر الفرص عالية الجودة والمثالية."
+                                 else "Your risk management is outstanding. Consider scaling up position sizes slightly on your highest confidence setups."
                 )
             }
-            // Patient Swing / Sniper
-            avgTradesPerDay <= 2.0 && checklistAdherence > 0.60 -> {
+            isDisciplined -> {
                 TraderProfile(
-                    title = if (lang == "fa") "تریدر صبور و شکارچی موقعیت (Sniper / Patient Swing)" 
-                            else if (lang == "ar") "متداول قناص وصبور (Sniper / Swing)" 
-                            else "Patient Swing / Sniper",
-                    description = if (lang == "fa") "شما بسیار باحوصله هستید، فقط معاملات با کیفیت بالا ثبت می‌کنید (میانگین کمتر از ۲ معامله در روز) و بیهوده سرمایه خود را به خطر نمی‌اندازید."
-                                  else if (lang == "ar") "تتميز بالصبر الكبير، ولا تدخل إلا الصفقات عالية الجودة (متوسط أقل من صفقتين يومياً) متجنباً المخاطرة غير الضرورية."
-                                  else "You show immense patience, executing selective high-quality setups (less than 2 trades per day) and protecting your trading capital.",
-                    dominantTrait = if (lang == "fa") "صبر بالا در انتظار تاییدیه" else if (lang == "ar") "الصبر العالي واختيار الصفقات" else "Patience & high selectivity",
+                    title = if (lang == "fa") "معامله‌گر منظم (Disciplined Trader)" 
+                            else if (lang == "ar") "متداول منضبط (Disciplined Trader)" 
+                            else "Disciplined Trader",
+                    description = if (lang == "fa") "شما با صبر و برنامه‌ریزی ترید می‌کنید، امتیاز انضباط بالایی دارید و به چک‌لیست قبل از ورود متعهد هستید."
+                                  else if (lang == "ar") "تتداول بصبر وتخطيط مسبق، وتتمتع بنسبة انضباط عالية وتلتزم بقوائم المراجعة قبل دخول السوق."
+                                  else "You execute with strong patience, maintain an excellent discipline score, and adhere consistently to your pre-trade checklists.",
+                    dominantTrait = if (lang == "fa") "پایبندی عالی به برنامه" else if (lang == "ar") "الالتزام التام بالخطة" else "Excellent Process Adherence",
                     iconName = "my_location",
-                    suggestion = if (lang == "fa") "همین رویکرد شکارچی‌گونه را حفظ کنید. روی ارتقای نسبت ریسک به ریوارد (R:R) تمرکز کنید تا بازدهی شما چند برابر شود."
-                                 else if (lang == "ar") "حافظ على هذا الأسلوب الاستراتيجي. ركز على تحسين نسبة العائد إلى المخاطرة (R:R) لزيادة ربحيتك."
-                                 else "Keep hunting premium setups. Optimize your average Risk-to-Reward ratio to further boost returns."
+                    suggestion = if (lang == "fa") "بسیار عالی! همین روند منظم را حفظ کرده و روی افزایش سوددهی مستمر تمرکز کنید."
+                                 else if (lang == "ar") "رائع جداً! استمر على هذا النهج المنضبط وركز على تنمية حسابك بشكل تدريجي."
+                                 else "Superb! Maintain this high-standard operational process and let compounding grow your trading account."
                 )
             }
-            // General / Learning Trader
             else -> {
                 TraderProfile(
-                    title = if (lang == "fa") "معامله‌گر در حال رشد و توسعه (Learning / Adaptive)" 
-                            else if (lang == "ar") "متداول في مرحلة النمو والتطوير" 
-                            else "Adaptive Growing Trader",
-                    description = if (lang == "fa") "شما در حال کسب تجربه و تطبیق استراتژی‌ها هستید. آمار شما دارای نقاط قوت مثل پشتکار بالا و پتانسیل پیشرفت بسیار است."
-                                  else if (lang == "ar") "أنت في مرحلة ممتازة لبناء المهارات وتطوير استراتيجيتك. تظهر بياناتك إصراراً كبيراً وقدرة عالية على التطور."
-                                  else "You are gathering valuable execution data, adapting your tactics, and showing consistent progression in your trading journey.",
-                    dominantTrait = if (lang == "fa") "تلاش برای بهبود مستمر" else if (lang == "ar") "السعي للتطوير المستمر" else "Continuous improvement",
+                    title = if (lang == "fa") "معامله‌گر ناهماهنگ (Inconsistent Trader)" 
+                            else if (lang == "ar") "متداول غير مستقر (Inconsistent Trader)" 
+                            else "Inconsistent Trader",
+                    description = if (lang == "fa") "عملکرد و میزان انضباط شما نوسان دارد. در برخی روزها بسیار منظم هستید و در روزهای دیگر رفتارهای شتاب‌زده انجام می‌دهید."
+                                  else if (lang == "ar") "يظهر أداؤك تفاوتاً في الانضباط. في بعض الأيام تكون ملتزماً تماماً بالخطة وفي أيام أخرى تندفع بعشوائية."
+                                  else "Your execution and discipline show high variability. Some days you follow your plan perfectly, while other days are subject to minor impulsive behaviors.",
+                    dominantTrait = if (lang == "fa") "نوسان در انضباط فردی" else if (lang == "ar") "تذبذب الأداء والانضباط" else "Discipline Fluctuation",
                     iconName = "trending_up",
-                    suggestion = if (lang == "fa") "سعی کنید تگ‌ها و استراتژی‌های خود را برای هر ترید ثبت کنید تا مربی هوش مصنوعی دقیق‌تر به شما کمک کند."
-                                 else if (lang == "ar") "احرص على تسجيل خطتك لكل صفقة حتى يتسنى للمحلل الذكي تقديم توصيات أكثر دقة."
-                                 else "Ensure all trades contain explicit strategy classifications to unlock deeper behavioral insights."
+                    suggestion = if (lang == "fa") "قوانین معاملاتی خود را هر روز قبل از شروع بازار مرور کنید. ثبات قدم کلید موفقیت شماست."
+                                 else if (lang == "ar") "راجع قوانين التداول الخاصة بك يومياً قبل بدء التداول. الاستمرارية هي مفتاح نجاحك."
+                                 else "Review your trading rules every morning before opening charts. Building daily habits is key to consistency."
                 )
             }
         }

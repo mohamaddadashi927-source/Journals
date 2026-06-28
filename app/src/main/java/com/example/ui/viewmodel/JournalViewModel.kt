@@ -529,6 +529,18 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    // CSV Trades Export
+    suspend fun exportCsvBackupFile(): Uri? = withContext(Dispatchers.IO) {
+        val context = getApplication<Application>()
+        try {
+            val dbTrades = repository.allTrades.first()
+            com.example.data.backup.BackupHelper.exportTradesToCsv(context, dbTrades)
+        } catch (e: Exception) {
+            Log.e("JournalViewModel", "Failed to export CSV backup", e)
+            null
+        }
+    }
+
     // Beautiful Excel Styled Export
     suspend fun exportCsvFile(): Uri? = withContext(Dispatchers.IO) {
         val context = getApplication<Application>()

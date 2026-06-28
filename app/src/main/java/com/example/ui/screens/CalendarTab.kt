@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.DailyJournal
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
@@ -39,9 +40,9 @@ fun CalendarTab(
     viewModel: JournalViewModel,
     onNavigateToTradeDetail: (Int) -> Unit
 ) {
-    val trades by viewModel.trades.collectAsState()
-    val language by viewModel.language.collectAsState()
-    val currency by viewModel.currency.collectAsState()
+    val trades by viewModel.trades.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle()
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -92,7 +93,7 @@ fun CalendarTab(
     val dailyJournalFlow = remember(selectedDateStr) {
         viewModel.getDailyJournalByDate(selectedDateStr)
     }
-    val dailyJournal by dailyJournalFlow.collectAsState(initial = null)
+    val dailyJournal by dailyJournalFlow.collectAsStateWithLifecycle(initialValue = null)
 
     // Editor modal or dialog state for Daily Notes
     var showJournalEditor by remember { mutableStateOf(false) }
