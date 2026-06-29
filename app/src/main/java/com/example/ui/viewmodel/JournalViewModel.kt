@@ -464,6 +464,16 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     fun switchAccount(id: String) {
         val account = accountsList.value.find { it.id == id } ?: return
+        
+        // Reset local filter and search states to clear previous trading session data
+        searchQuery.value = ""
+        selectedMarket.value = null
+        selectedStatus.value = null
+        selectedTags.value = emptySet()
+        startDate.value = null
+        endDate.value = null
+        sortType.value = SortType.DATE_DESC
+        
         sharedPrefs.edit().putString("active_account_id", id).apply()
         activeAccountId.value = id
         initializeAccount(account.name, account.initialBalance)
@@ -550,7 +560,12 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     fun updateTrade(trade: Trade) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.updateTrade(trade)
+            val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
+                trade.copy(accountId = activeAccountId.value)
+            } else {
+                trade
+            }
+            repository.updateTrade(tradeWithAccount)
         }
     }
 

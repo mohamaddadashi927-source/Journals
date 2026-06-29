@@ -51,6 +51,7 @@ fun SettingsScreen(
     val language by viewModel.language.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val accountsList by viewModel.accountsList.collectAsStateWithLifecycle()
+    val activeAccountId by viewModel.activeAccountId.collectAsStateWithLifecycle()
     val activeAccountName by viewModel.accountName.collectAsStateWithLifecycle()
     val activeBalance by viewModel.initialBalance.collectAsStateWithLifecycle()
     val currency by viewModel.currency.collectAsStateWithLifecycle()
@@ -231,7 +232,7 @@ fun SettingsScreen(
 
                         // Account Cards
                         accountsList.forEach { account ->
-                            val isActive = activeAccountName == account.name
+                            val isActive = activeAccountId == account.id
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
