@@ -58,6 +58,7 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     // Accounts list StateFlow
     val accountsList = MutableStateFlow<List<TradingAccount>>(emptyList())
+    val activeAccountId = MutableStateFlow(sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default")
 
     init {
         loadAccounts()
@@ -92,6 +93,7 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     // Filtered and Sorted Trades
     val trades: StateFlow<List<Trade>> = combine(
         repository.allTrades,
+        activeAccountId,
         searchQuery,
         selectedMarket,
         selectedStatus,
@@ -101,15 +103,16 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         sortType
     ) { flows ->
         val allTrades = flows[0] as List<Trade>
-        val query = flows[1] as String
-        val market = flows[2] as String?
-        val status = flows[3] as String?
-        val tags = flows[4] as Set<String>
-        val start = flows[5] as Long?
-        val end = flows[6] as Long?
-        val sort = flows[7] as SortType
+        val currentAccountId = flows[1] as String
+        val query = flows[2] as String
+        val market = flows[3] as String?
+        val status = flows[4] as String?
+        val tags = flows[5] as Set<String>
+        val start = flows[6] as Long?
+        val end = flows[7] as Long?
+        val sort = flows[8] as SortType
 
-        var list = allTrades
+        var list = allTrades.filter { it.accountId == currentAccountId }
 
         // Apply Text Search
         if (query.isNotEmpty()) {
@@ -168,9 +171,14 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         list
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Statistics derived from full list
-    val statistics = repository.allTrades.map { allTrades ->
-        val closedTrades = allTrades.filter { it.exitPrice != null }.sortedBy { it.dateTime }
+    // Statistics derived from active account list
+    val statistics: StateFlow<TradeStats> = combine(
+        repository.allTrades,
+        activeAccountId,
+        initialBalance
+    ) { allTrades, currentAccountId, currentBalance ->
+        val accountTrades = allTrades.filter { it.accountId == currentAccountId }
+        val closedTrades = accountTrades.filter { it.exitPrice != null }.sortedBy { it.dateTime }
         val wins = closedTrades.filter { (it.pnl ?: 0.0) > 0.0 }
         val losses = closedTrades.filter { (it.pnl ?: 0.0) < 0.0 }
         
@@ -223,8 +231,8 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         }
 
         // Drawdown calculation
-        var peak = initialBalance.value
-        var currentEquity = initialBalance.value
+        var peak = currentBalance
+        var currentEquity = currentBalance
         var maxDrawdownAbs = 0.0
         var maxDrawdownPct = 0.0
 
@@ -303,9 +311,9 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         TradeStats(
             totalPnL = totalPnL,
             winRate = winRate,
-            totalTradesCount = allTrades.size,
+            totalTradesCount = accountTrades.size,
             closedTradesCount = closedTrades.size,
-            openTradesCount = allTrades.filter { it.exitPrice == null }.size,
+            openTradesCount = accountTrades.filter { it.exitPrice == null }.size,
             winsCount = wins.size,
             lossesCount = losses.size,
             maxProfit = maxProfit,
@@ -336,10 +344,12 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     val advancedStats: StateFlow<com.example.data.analysis.AdvancedStats?> = combine(
         repository.allTrades,
+        activeAccountId,
         allDailyJournals,
         language
-    ) { allTrades, allJournals, lang ->
-        com.example.data.analysis.AnalysisEngine.analyze(allTrades, allJournals, lang)
+    ) { allTrades, currentAccountId, allJournals, lang ->
+        val accountTrades = allTrades.filter { it.accountId == currentAccountId }
+        com.example.data.analysis.AnalysisEngine.analyze(accountTrades, allJournals, lang)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Save/Update Settings in SharedPreferences
@@ -370,6 +380,7 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
         
         // Sync inside our loaded list
         val activeId = sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default"
+        activeAccountId.value = activeId
         val currentList = accountsList.value.map {
             if (it.id == activeId) it.copy(name = name, initialBalance = balance) else it
         }
@@ -454,6 +465,7 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     fun switchAccount(id: String) {
         val account = accountsList.value.find { it.id == id } ?: return
         sharedPrefs.edit().putString("active_account_id", id).apply()
+        activeAccountId.value = id
         initializeAccount(account.name, account.initialBalance)
     }
 
@@ -527,7 +539,12 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     fun insertTrade(trade: Trade) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.insertTrade(trade)
+            val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
+                trade.copy(accountId = activeAccountId.value)
+            } else {
+                trade
+            }
+            repository.insertTrade(tradeWithAccount)
         }
     }
 

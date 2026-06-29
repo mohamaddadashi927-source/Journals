@@ -157,84 +157,168 @@ fun DashboardScreen(
             else -> if (language == "fa") "اهداف معاملاتی و چک‌لیست" else "Trading Goals & Rules"
         }
 
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = screenTitle,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleLarge
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isWideScreen = maxWidth >= 720.dp
+
+            Scaffold(
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                text = screenTitle,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        },
+                        actions = {
+                            IconButton(onClick = onNavigateToSettings) {
+                                Icon(Icons.Default.Settings, contentDescription = Loc.tr("settings_title", language))
+                            }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background,
+                            titleContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground,
+                            actionIconContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground
                         )
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = Loc.tr("settings_title", language))
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = onNavigateToAddTrade,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.padding(bottom = if (isWideScreen) 0.dp else 8.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = Loc.tr("add_trade", language))
+                    }
+                },
+                bottomBar = {
+                    if (!isWideScreen) {
+                        NavigationBar(
+                            containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                        ) {
+                            NavigationBarItem(
+                                selected = activeTab == 0,
+                                onClick = { activeTab = 0 },
+                                icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                                label = { Text(if (language == "fa") "داشبورد" else "Dashboard", fontSize = 10.sp) }
+                            )
+                            NavigationBarItem(
+                                selected = activeTab == 1,
+                                onClick = { activeTab = 1 },
+                                icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                                label = { Text(if (language == "fa") "تقویم" else "Calendar", fontSize = 10.sp) }
+                            )
+                            NavigationBarItem(
+                                selected = activeTab == 2,
+                                onClick = { activeTab = 2 },
+                                icon = { Icon(Icons.Default.Analytics, contentDescription = null) },
+                                label = { Text(if (language == "fa") "تحلیل" else "Analysis", fontSize = 10.sp) }
+                            )
+                            NavigationBarItem(
+                                selected = activeTab == 3,
+                                onClick = { activeTab = 3 },
+                                icon = { Icon(Icons.Default.Book, contentDescription = null) },
+                                label = { Text(if (language == "fa") "یادداشت" else "Journal", fontSize = 10.sp) }
+                            )
+                            NavigationBarItem(
+                                selected = activeTab == 4,
+                                onClick = { activeTab = 4 },
+                                icon = { Icon(Icons.Default.Stars, contentDescription = null) },
+                                label = { Text(if (language == "fa") "اهداف" else "Goals", fontSize = 10.sp) }
+                            )
                         }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background,
-                        titleContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground,
-                        actionIconContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground
-                    )
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onNavigateToAddTrade,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = Loc.tr("add_trade", language))
+                    }
                 }
-            },
-            bottomBar = {
-                NavigationBar(
-                    containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                    modifier = Modifier.clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            ) { paddingValues ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background)
+                        .padding(paddingValues)
                 ) {
-                    NavigationBarItem(
-                        selected = activeTab == 0,
-                        onClick = { activeTab = 0 },
-                        icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
-                        label = { Text(if (language == "fa") "داشبورد" else "Dashboard", fontSize = 10.sp) }
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == 1,
-                        onClick = { activeTab = 1 },
-                        icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
-                        label = { Text(if (language == "fa") "تقویم" else "Calendar", fontSize = 10.sp) }
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == 2,
-                        onClick = { activeTab = 2 },
-                        icon = { Icon(Icons.Default.Analytics, contentDescription = null) },
-                        label = { Text(if (language == "fa") "تحلیل" else "Analysis", fontSize = 10.sp) }
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == 3,
-                        onClick = { activeTab = 3 },
-                        icon = { Icon(Icons.Default.Book, contentDescription = null) },
-                        label = { Text(if (language == "fa") "یادداشت" else "Journal", fontSize = 10.sp) }
-                    )
-                    NavigationBarItem(
-                        selected = activeTab == 4,
-                        onClick = { activeTab = 4 },
-                        icon = { Icon(Icons.Default.Stars, contentDescription = null) },
-                        label = { Text(if (language == "fa") "اهداف" else "Goals", fontSize = 10.sp) }
-                    )
-                }
-            }
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background)
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
-            ) {
+                    if (isWideScreen) {
+                        NavigationRail(
+                            containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            header = {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxHeight()
+                        ) {
+                            NavigationRailItem(
+                                selected = activeTab == 0,
+                                onClick = { activeTab = 0 },
+                                icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                                label = { Text(if (language == "fa") "داشبورد" else "Dashboard") }
+                            )
+                            NavigationRailItem(
+                                selected = activeTab == 1,
+                                onClick = { activeTab = 1 },
+                                icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                                label = { Text(if (language == "fa") "تقویم" else "Calendar") }
+                            )
+                            NavigationRailItem(
+                                selected = activeTab == 2,
+                                onClick = { activeTab = 2 },
+                                icon = { Icon(Icons.Default.Analytics, contentDescription = null) },
+                                label = { Text(if (language == "fa") "تحلیل" else "Analysis") }
+                            )
+                            NavigationRailItem(
+                                selected = activeTab == 3,
+                                onClick = { activeTab = 3 },
+                                icon = { Icon(Icons.Default.Book, contentDescription = null) },
+                                label = { Text(if (language == "fa") "یادداشت" else "Journal") }
+                            )
+                            NavigationRailItem(
+                                selected = activeTab == 4,
+                                onClick = { activeTab = 4 },
+                                icon = { Icon(Icons.Default.Stars, contentDescription = null) },
+                                label = { Text(if (language == "fa") "اهداف" else "Goals") }
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = if (isWideScreen) {
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(horizontal = 24.dp)
+                        } else {
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(horizontal = 16.dp)
+                        },
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Box(
+                            modifier = if (isWideScreen) {
+                                Modifier
+                                    .fillMaxSize()
+                                    .widthIn(max = 1000.dp)
+                            } else {
+                                Modifier.fillMaxSize()
+                            }
+                        ) {
                 when (activeTab) {
                     0 -> {
                         val labels = remember(language) {
@@ -268,194 +352,393 @@ fun DashboardScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             contentPadding = PaddingValues(vertical = 16.dp)
                         ) {
-                            // 1. KEY PERFORMANCE METRICS CARD (Balance prominent, other stats in smaller size)
-                            item {
-                                val currentBalance = initialBalance + stats.totalPnL
-                                val isPnlProfit = stats.totalPnL >= 0.0
-                                val pnlColor = if (stats.totalPnL > 0.0) Color(0xFF10B981) else if (stats.totalPnL < 0.0) Color(0xFFEF4444) else Color.White
-                                val pnlPrefix = if (stats.totalPnL > 0.0) "+" else ""
-
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .testTag("key_metrics_card"),
-                                    shape = RoundedCornerShape(20.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFF0C0E12)
-                                    ),
-                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(20.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                            if (isWideScreen) {
+                                // Side-by-side Key Metrics and Equity Curve
+                                item {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.Top
                                     ) {
-                                        // Header
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                        // 1. Key Metrics Card (takes weight 1)
+                                        val currentBalance = initialBalance + stats.totalPnL
+                                        val isPnlProfit = stats.totalPnL >= 0.0
+                                        val pnlColor = if (stats.totalPnL > 0.0) Color(0xFF10B981) else if (stats.totalPnL < 0.0) Color(0xFFEF4444) else Color.White
+                                        val pnlPrefix = if (stats.totalPnL > 0.0) "+" else ""
+
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .testTag("key_metrics_card"),
+                                            shape = RoundedCornerShape(20.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFF0C0E12)
+                                            ),
+                                            border = BorderStroke(1.dp, Color(0xFF1F222B))
                                         ) {
-                                            Text(
-                                                text = labels.keyMetrics,
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF94A3B8)
-                                            )
-                                            Icon(
-                                                imageVector = Icons.Default.Analytics,
-                                                contentDescription = null,
-                                                tint = Color(0xFF94A3B8),
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            Column(
+                                                modifier = Modifier.padding(20.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                // Header
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = labels.keyMetrics,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF94A3B8)
+                                                    )
+                                                    Icon(
+                                                        imageVector = Icons.Default.Analytics,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF94A3B8),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.height(18.dp))
+
+                                                // Prominent Balance
+                                                Text(
+                                                    text = labels.balanceTitle,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = Color(0xFF64748B),
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = "${String.format(Locale.US, "%,.2f", currentBalance)} $currencySymbol",
+                                                    style = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.Black,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    textAlign = TextAlign.Center
+                                                )
+
+                                                Spacer(modifier = Modifier.height(18.dp))
+                                                HorizontalDivider(color = Color(0xFF1F222B))
+                                                Spacer(modifier = Modifier.height(16.dp))
+
+                                                // Smaller stats in 2x2 grid
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    // Win Rate
+                                                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Text(
+                                                            text = labels.winRate,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color(0xFF64748B),
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                        Text(
+                                                            text = "${String.format(Locale.US, "%.1f", stats.winRate)}%",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color(0xFF10B981)
+                                                        )
+                                                    }
+
+                                                    // Risk to Reward
+                                                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Text(
+                                                            text = labels.riskReward,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color(0xFF64748B),
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                        Text(
+                                                            text = "1 : ${String.format(Locale.US, "%.2f", stats.riskRewardRatio)}",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color(0xFF3B82F6)
+                                                        )
+                                                    }
+                                                }
+
+                                                Spacer(modifier = Modifier.height(16.dp))
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    // Total Trades
+                                                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Text(
+                                                            text = labels.totalTrades,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color(0xFF64748B),
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                        Text(
+                                                            text = "${stats.totalTradesCount}",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color.White
+                                                        )
+                                                    }
+
+                                                    // Net PnL (Profit/Loss)
+                                                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                        Text(
+                                                            text = labels.netPnl,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color(0xFF64748B),
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                        Text(
+                                                            text = "$pnlPrefix${String.format(Locale.US, "%,.1f", stats.totalPnL)} $currencySymbol",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = pnlColor
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
 
-                                        Spacer(modifier = Modifier.height(18.dp))
-
-                                        // Prominent Balance
-                                        Text(
-                                            text = labels.balanceTitle,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color(0xFF64748B),
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "${String.format(Locale.US, "%,.2f", currentBalance)} $currencySymbol",
-                                            style = MaterialTheme.typography.headlineLarge,
-                                            fontWeight = FontWeight.Black,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textAlign = TextAlign.Center
-                                        )
-
-                                        Spacer(modifier = Modifier.height(18.dp))
-                                        HorizontalDivider(color = Color(0xFF1F222B))
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        // Smaller stats in 2x2 grid
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        // 2. Equity Curve Card (takes weight 1.2)
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1.2f)
+                                                .testTag("equity_curve_card"),
+                                            shape = RoundedCornerShape(20.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
+                                            border = BorderStroke(1.dp, Color(0xFF1F222B))
                                         ) {
-                                            // Win Rate
-                                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(
-                                                    text = labels.winRate,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color(0xFF64748B),
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "${String.format(Locale.US, "%.1f", stats.winRate)}%",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF10B981)
-                                                )
-                                            }
+                                            Column(modifier = Modifier.padding(16.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = labels.equityCurveHeader,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF94A3B8)
+                                                    )
+                                                    Icon(
+                                                        imageVector = Icons.Default.ShowChart,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
 
-                                            // Risk to Reward
-                                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(
-                                                    text = labels.riskReward,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color(0xFF64748B),
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "1 : ${String.format(Locale.US, "%.2f", stats.riskRewardRatio)}",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF3B82F6)
-                                                )
-                                            }
-                                        }
+                                                Spacer(modifier = Modifier.height(16.dp))
 
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            // Total Trades
-                                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(
-                                                    text = labels.totalTrades,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color(0xFF64748B),
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "${stats.totalTradesCount}",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.White
-                                                )
-                                            }
-
-                                            // Net PnL (Profit/Loss)
-                                            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(
-                                                    text = labels.netPnl,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color(0xFF64748B),
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = "$pnlPrefix${String.format(Locale.US, "%,.1f", stats.totalPnL)} $currencySymbol",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = pnlColor
+                                                EquityCurveChart(
+                                                    trades = trades,
+                                                    currencySymbol = currencySymbol,
+                                                    initialBalance = initialBalance,
+                                                    lang = language,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(236.dp)
                                                 )
                                             }
                                         }
                                     }
                                 }
-                            }
+                            } else {
+                                // 1. KEY PERFORMANCE METRICS CARD (Balance prominent, other stats in smaller size)
+                                item {
+                                    val currentBalance = initialBalance + stats.totalPnL
+                                    val isPnlProfit = stats.totalPnL >= 0.0
+                                    val pnlColor = if (stats.totalPnL > 0.0) Color(0xFF10B981) else if (stats.totalPnL < 0.0) Color(0xFFEF4444) else Color.White
+                                    val pnlPrefix = if (stats.totalPnL > 0.0) "+" else ""
 
-                            // 2. EQUITY CURVE CHART (Vital visual section on Dashboard)
-                            item {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .testTag("equity_curve_card"),
-                                    shape = RoundedCornerShape(20.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("key_metrics_card"),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(0xFF0C0E12)
+                                        ),
+                                        border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(20.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
+                                            // Header
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = labels.keyMetrics,
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF94A3B8)
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.Default.Analytics,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF94A3B8),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(18.dp))
+
+                                            // Prominent Balance
                                             Text(
-                                                text = labels.equityCurveHeader,
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF94A3B8)
+                                                text = labels.balanceTitle,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color(0xFF64748B),
+                                                fontWeight = FontWeight.Medium
                                             )
-                                            Icon(
-                                                imageVector = Icons.Default.ShowChart,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(18.dp)
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "${String.format(Locale.US, "%,.2f", currentBalance)} $currencySymbol",
+                                                style = MaterialTheme.typography.headlineLarge,
+                                                fontWeight = FontWeight.Black,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                textAlign = TextAlign.Center
+                                            )
+
+                                            Spacer(modifier = Modifier.height(18.dp))
+                                            HorizontalDivider(color = Color(0xFF1F222B))
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            // Smaller stats in 2x2 grid
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                // Win Rate
+                                                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = labels.winRate,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFF64748B),
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "${String.format(Locale.US, "%.1f", stats.winRate)}%",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF10B981)
+                                                    )
+                                                }
+
+                                                // Risk to Reward
+                                                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = labels.riskReward,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFF64748B),
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "1 : ${String.format(Locale.US, "%.2f", stats.riskRewardRatio)}",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF3B82F6)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                // Total Trades
+                                                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = labels.totalTrades,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFF64748B),
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "${stats.totalTradesCount}",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White
+                                                    )
+                                                }
+
+                                                // Net PnL (Profit/Loss)
+                                                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = labels.netPnl,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFF64748B),
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "$pnlPrefix${String.format(Locale.US, "%,.1f", stats.totalPnL)} $currencySymbol",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = pnlColor
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 2. EQUITY CURVE CHART (Vital visual section on Dashboard)
+                                item {
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("equity_curve_card"),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
+                                        border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                    ) {
+                                        Column(modifier = Modifier.padding(16.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = labels.equityCurveHeader,
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF94A3B8)
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.Default.ShowChart,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+
+                                            EquityCurveChart(
+                                                trades = trades,
+                                                currencySymbol = currencySymbol,
+                                                initialBalance = initialBalance,
+                                                lang = language,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(200.dp)
                                             )
                                         }
-
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        EquityCurveChart(
-                                            trades = trades,
-                                            currencySymbol = currencySymbol,
-                                            initialBalance = initialBalance,
-                                            lang = language,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(200.dp)
-                                        )
                                     }
                                 }
                             }
@@ -640,8 +923,11 @@ fun DashboardScreen(
                     3 -> DailyJournalTab(viewModel)
                     4 -> GoalsTab(viewModel)
                 }
+                            }
+                        }
+                    }
+                }
             }
-        }
 
         if (showDailyReviewDialog) {
             DailyReviewDialog(

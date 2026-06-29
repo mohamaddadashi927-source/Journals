@@ -81,12 +81,18 @@ fun TradeListScreen(
                 )
             }
         ) { paddingValues ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black)
-                    .padding(paddingValues)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.TopCenter
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 900.dp)
+                ) {
                 // 1. Sleek Search & Sort Layout
                 Row(
                     modifier = Modifier
@@ -246,6 +252,7 @@ fun TradeListScreen(
             }
         }
     }
+}
 }
 
 @Composable

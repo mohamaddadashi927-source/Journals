@@ -25,7 +25,8 @@ data class Trade(
     val postTradeNotes: String = "", // Notes added after trade is closed
     val richNotes: String = "", // Detailed rich notes and entry reasons
     val emotionalState: String = "", // Emotional state during the trade
-    val customPnl: Double? = null // Manually registered profit/loss
+    val customPnl: Double? = null, // Manually registered profit/loss
+    val accountId: String = "acc_default" // Associated account identifier
 ) {
     val pnl: Double?
         get() = if (exitPrice != null) {

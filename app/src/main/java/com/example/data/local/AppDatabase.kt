@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
         com.example.data.model.DailyJournal::class,
         com.example.data.model.ChecklistItem::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

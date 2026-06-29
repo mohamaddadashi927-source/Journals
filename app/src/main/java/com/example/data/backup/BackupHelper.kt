@@ -62,6 +62,7 @@ object BackupHelper {
                     put("postTradeNotes", t.postTradeNotes)
                     put("richNotes", t.richNotes)
                     put("emotionalState", t.emotionalState)
+                    put("accountId", t.accountId)
                 }
                 tradesArray.put(obj)
             }
@@ -284,7 +285,8 @@ object BackupHelper {
                             checklistResults = obj.optString("checklistResults", ""),
                             postTradeNotes = obj.optString("postTradeNotes", ""),
                             richNotes = obj.optString("richNotes", ""),
-                            emotionalState = obj.optString("emotionalState", "")
+                            emotionalState = obj.optString("emotionalState", ""),
+                            accountId = obj.optString("accountId", "acc_default")
                         )
                         db.tradeDao().insertTrade(trade)
                     }

@@ -250,15 +250,21 @@ fun AddEditTradeScreen(
                 )
             }
         ) { paddingValues ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.TopCenter
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = 900.dp)
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 // 1. BUY / SELL Toggle Row
                 Row(
                     modifier = Modifier
@@ -1002,6 +1008,7 @@ fun AddEditTradeScreen(
                     ) {
                         Text(Loc.tr("save_position", language), fontWeight = FontWeight.Bold)
                     }
+                }
                 }
             }
         }
