@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
 import com.example.ui.theme.CrimsonRed
@@ -45,6 +46,17 @@ fun TradeListScreen(
     val sortType by viewModel.sortType.collectAsStateWithLifecycle()
     val currency by viewModel.currency.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+
+    val isDark = when (themeMode) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> isSystemInDarkTheme()
+    }
+    val cardBg = if (isDark) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    val textColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+    val textMuted = if (isDark) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
 
     val currencySymbol = when (currency) {
         "IRT" -> "تومان"
@@ -63,7 +75,7 @@ fun TradeListScreen(
                             text = Loc.tr("trade_list", language),
                             fontWeight = FontWeight.Black,
                             fontSize = 18.sp,
-                            color = Color.White
+                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                         )
                     },
                     navigationIcon = {
@@ -71,12 +83,12 @@ fun TradeListScreen(
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = Loc.tr("back", language),
-                                tint = Color.White
+                                tint = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                             )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Black
+                        containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.background
                     )
                 )
             }
@@ -84,7 +96,7 @@ fun TradeListScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
+                    .background(if (isDark) Color.Black else MaterialTheme.colorScheme.background)
                     .padding(paddingValues),
                 contentAlignment = Alignment.TopCenter
             ) {
@@ -137,12 +149,12 @@ fun TradeListScreen(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF0C0E12),
-                            unfocusedContainerColor = Color(0xFF0C0E12),
-                            focusedBorderColor = Color(0xFF1F222B),
-                            unfocusedBorderColor = Color(0xFF1F222B),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedContainerColor = if (isDark) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = if (isDark) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surface,
+                            focusedBorderColor = cardBorder,
+                            unfocusedBorderColor = cardBorder,
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor
                         )
                     )
 
@@ -152,41 +164,41 @@ fun TradeListScreen(
                         IconButton(
                             onClick = { sortMenuExpanded = true },
                             modifier = Modifier
-                                .background(Color(0xFF0C0E12), RoundedCornerShape(12.dp))
-                                .border(1.dp, Color(0xFF1F222B), RoundedCornerShape(12.dp))
+                                .background(cardBg, RoundedCornerShape(12.dp))
+                                .border(1.dp, cardBorder, RoundedCornerShape(12.dp))
                                 .size(56.dp)
                                 .testTag("trade_sort_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
                                 contentDescription = Loc.tr("sort_order", language),
-                                tint = Color.White
+                                tint = textColor
                             )
                         }
 
                         DropdownMenu(
                             expanded = sortMenuExpanded,
                             onDismissRequest = { sortMenuExpanded = false },
-                            modifier = Modifier.background(Color(0xFF0C0E12))
+                            modifier = Modifier.background(cardBg)
                         ) {
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_date_desc_text", language), color = Color.White) },
-                                leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = Color.White) },
+                                text = { Text(Loc.tr("sort_date_desc_text", language), color = textColor) },
+                                leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = textColor) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_DESC
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_date_asc_text", language), color = Color.White) },
-                                leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Color.White) },
+                                text = { Text(Loc.tr("sort_date_asc_text", language), color = textColor) },
+                                leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = textColor) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.DATE_ASC
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_pnl_desc_text", language), color = Color.White) },
+                                text = { Text(Loc.tr("sort_pnl_desc_text", language), color = textColor) },
                                 leadingIcon = { Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color(0xFF10B981)) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_DESC
@@ -194,7 +206,7 @@ fun TradeListScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(Loc.tr("sort_pnl_asc_text", language), color = Color.White) },
+                                text = { Text(Loc.tr("sort_pnl_asc_text", language), color = textColor) },
                                 leadingIcon = { Icon(Icons.Default.TrendingDown, contentDescription = null, tint = Color(0xFFEF4444)) },
                                 onClick = {
                                     viewModel.sortType.value = SortType.PNL_ASC
@@ -281,9 +293,9 @@ fun ImprovedTradeRow(
             .testTag("trade_list_item_${trade.id}"),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF0C0E12)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, Color(0xFF1F222B))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
     ) {
         Row(
             modifier = Modifier
@@ -315,7 +327,7 @@ fun ImprovedTradeRow(
                         text = trade.market,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 16.sp
                     )
                     

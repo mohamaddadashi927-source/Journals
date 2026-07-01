@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -61,6 +62,17 @@ fun SettingsScreen(
         "USDT" -> "USDT"
         else -> "$"
     }
+
+    val isDark = when (themeMode) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> isSystemInDarkTheme()
+    }
+    val cardBg = if (isDark) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    val textColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+    val textMuted = if (isDark) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
+    val dividerColor = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
 
     // Dialog states
     var showExportSelectionDialog by remember { mutableStateOf(false) }
@@ -151,7 +163,7 @@ fun SettingsScreen(
                             text = labels.title,
                             fontWeight = FontWeight.Black,
                             fontSize = 18.sp,
-                            color = Color.White
+                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                         )
                     },
                     navigationIcon = {
@@ -159,12 +171,12 @@ fun SettingsScreen(
                             Icon(
                                 imageVector = if (language == "en") Icons.Default.ArrowBack else Icons.Default.ArrowForward,
                                 contentDescription = null,
-                                tint = Color.White
+                                tint = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                             )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Black
+                        containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.background
                     )
                 )
             }
@@ -172,7 +184,7 @@ fun SettingsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
+                    .background(if (isDark) Color.Black else MaterialTheme.colorScheme.background)
                     .padding(paddingValues),
                 contentAlignment = Alignment.TopCenter
             ) {
@@ -193,8 +205,8 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -218,7 +230,7 @@ fun SettingsScreen(
                                     text = labels.accountsHeader,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = textColor
                                 )
                             }
                             IconButton(onClick = { showAddAccountDialog = true }) {
@@ -238,12 +250,12 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .border(
                                         width = 1.dp,
-                                        color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color(0xFF1F222B),
+                                        color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else cardBorder,
                                         shape = RoundedCornerShape(12.dp)
                                     ),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else Color(0xFF07080A)
+                                    containerColor = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else (if (isDark) Color(0xFF07080A) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                                 )
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
@@ -261,7 +273,7 @@ fun SettingsScreen(
                                                     text = account.name,
                                                     style = MaterialTheme.typography.bodyLarge,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color.White
+                                                    color = textColor
                                                 )
                                                 if (isActive) {
                                                     Surface(
@@ -282,7 +294,7 @@ fun SettingsScreen(
                                             Text(
                                                 text = "${String.format(Locale.US, "%,.2f", account.initialBalance)} $currencySymbol",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = Color(0xFF94A3B8)
+                                                color = textMuted
                                             )
                                         }
 
@@ -315,7 +327,7 @@ fun SettingsScreen(
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Button(
                                             onClick = { viewModel.switchAccount(account.id) },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
+                                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E293B) else MaterialTheme.colorScheme.primaryContainer),
                                             modifier = Modifier.fillMaxWidth(),
                                             contentPadding = PaddingValues(vertical = 4.dp),
                                             shape = RoundedCornerShape(8.dp)
@@ -323,7 +335,7 @@ fun SettingsScreen(
                                             Text(
                                                 text = labels.switchLabel,
                                                 fontSize = 12.sp,
-                                                color = Color.White
+                                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                         }
                                     }
@@ -339,8 +351,8 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -360,7 +372,7 @@ fun SettingsScreen(
                                 text = labels.languageHeader,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = textColor
                             )
                         }
 
@@ -377,12 +389,12 @@ fun SettingsScreen(
                                         .clickable { viewModel.setLanguage(code) }
                                         .border(
                                             width = 1.dp,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF1F222B),
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else cardBorder,
                                             shape = RoundedCornerShape(10.dp)
                                         ),
                                     shape = RoundedCornerShape(10.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Black
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else (if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                                     )
                                 ) {
                                     Box(
@@ -391,7 +403,7 @@ fun SettingsScreen(
                                     ) {
                                         Text(
                                             text = name,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else textColor,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                             fontSize = 13.sp
                                         )
@@ -400,7 +412,7 @@ fun SettingsScreen(
                             }
                         }
 
-                        Divider(color = Color(0xFF1F222B))
+                        HorizontalDivider(color = dividerColor)
 
                         // Theme Header
                         Row(
@@ -416,7 +428,7 @@ fun SettingsScreen(
                                 text = labels.themeHeader,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = textColor
                             )
                         }
 
@@ -437,12 +449,12 @@ fun SettingsScreen(
                                         .clickable { viewModel.setThemeMode(mode) }
                                         .border(
                                             width = 1.dp,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF1F222B),
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else cardBorder,
                                             shape = RoundedCornerShape(10.dp)
                                         ),
                                     shape = RoundedCornerShape(10.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Black
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else (if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                                     )
                                 ) {
                                     Box(
@@ -451,7 +463,7 @@ fun SettingsScreen(
                                     ) {
                                         Text(
                                             text = name,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else textColor,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                             fontSize = 13.sp
                                         )
@@ -468,8 +480,8 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -488,7 +500,7 @@ fun SettingsScreen(
                                 text = labels.backupHeader,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = textColor
                             )
                         }
 
@@ -499,8 +511,8 @@ fun SettingsScreen(
                                 .clickable { showExportSelectionDialog = true }
                                 .testTag("export_backup_button"),
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.Black),
-                            border = BorderStroke(1.dp, Color(0xFF1F222B))
+                            colors = CardDefaults.cardColors(containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, cardBorder)
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
@@ -516,9 +528,9 @@ fun SettingsScreen(
                                     Icon(Icons.Default.Upload, contentDescription = null, tint = EmeraldGreen)
                                 }
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(labels.exportTitle, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(labels.exportTitle, color = textColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text(labels.exportDesc, color = Color(0xFF64748B), fontSize = 11.sp, lineHeight = 16.sp)
+                                    Text(labels.exportDesc, color = textMuted, fontSize = 11.sp, lineHeight = 16.sp)
                                 }
                             }
                         }
@@ -530,8 +542,8 @@ fun SettingsScreen(
                                 .clickable { restoreLauncher.launch("*/*") }
                                 .testTag("import_backup_button"),
                             shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.Black),
-                            border = BorderStroke(1.dp, Color(0xFF1F222B))
+                            colors = CardDefaults.cardColors(containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, cardBorder)
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
@@ -547,9 +559,9 @@ fun SettingsScreen(
                                     Icon(Icons.Default.Download, contentDescription = null, tint = Color(0xFF3B82F6))
                                 }
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(labels.importTitle, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(labels.importTitle, color = textColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text(labels.importDesc, color = Color(0xFF64748B), fontSize = 11.sp, lineHeight = 16.sp)
+                                    Text(labels.importDesc, color = textMuted, fontSize = 11.sp, lineHeight = 16.sp)
                                 }
                             }
                         }
@@ -562,7 +574,7 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     border = BorderStroke(1.dp, CrimsonRed.copy(alpha = 0.3f))
                 ) {
                     Row(
@@ -584,7 +596,7 @@ fun SettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(labels.resetTitle, color = CrimsonRed, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(labels.resetDesc, color = Color(0xFF64748B), fontSize = 11.sp, lineHeight = 16.sp)
+                            Text(labels.resetDesc, color = textMuted, fontSize = 11.sp, lineHeight = 16.sp)
                         }
                     }
                 }
@@ -593,7 +605,7 @@ fun SettingsScreen(
                 Text(
                     text = labels.offlineNote,
                     fontSize = 11.sp,
-                    color = Color(0xFF475569),
+                    color = if (isDark) Color(0xFF475569) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp,
                     modifier = Modifier.padding(vertical = 12.dp)
@@ -615,9 +627,9 @@ fun SettingsScreen(
 
             AlertDialog(
                 onDismissRequest = { showAddAccountDialog = false },
-                containerColor = Color(0xFF0C0E12),
+                containerColor = cardBg,
                 title = {
-                    Text(text = labels.addAccount, color = Color.White, fontWeight = FontWeight.Black)
+                    Text(text = labels.addAccount, color = textColor, fontWeight = FontWeight.Black)
                 },
                 text = {
                     Column(
@@ -630,11 +642,11 @@ fun SettingsScreen(
                             label = { Text(labels.accountNameLabel) },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = Color(0xFF1F222B),
+                                unfocusedBorderColor = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline,
                                 focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = Color(0xFF64748B),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                unfocusedLabelColor = textMuted,
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -646,11 +658,11 @@ fun SettingsScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = Color(0xFF1F222B),
+                                unfocusedBorderColor = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline,
                                 focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = Color(0xFF64748B),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                unfocusedLabelColor = textMuted,
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -672,7 +684,7 @@ fun SettingsScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showAddAccountDialog = false }) {
-                        Text(labels.cancel, color = Color(0xFF64748B))
+                        Text(labels.cancel, color = textMuted)
                     }
                 }
             )
@@ -685,9 +697,9 @@ fun SettingsScreen(
 
             AlertDialog(
                 onDismissRequest = { accountToEdit = null },
-                containerColor = Color(0xFF0C0E12),
+                containerColor = cardBg,
                 title = {
-                    Text(text = labels.editAccountTitle, color = Color.White, fontWeight = FontWeight.Black)
+                    Text(text = labels.editAccountTitle, color = textColor, fontWeight = FontWeight.Black)
                 },
                 text = {
                     Column(
@@ -700,11 +712,11 @@ fun SettingsScreen(
                             label = { Text(labels.accountNameLabel) },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = Color(0xFF1F222B),
+                                unfocusedBorderColor = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline,
                                 focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = Color(0xFF64748B),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                unfocusedLabelColor = textMuted,
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -716,11 +728,11 @@ fun SettingsScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = Color(0xFF1F222B),
+                                unfocusedBorderColor = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline,
                                 focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = Color(0xFF64748B),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                unfocusedLabelColor = textMuted,
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -742,7 +754,7 @@ fun SettingsScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { accountToEdit = null }) {
-                        Text(labels.cancel, color = Color(0xFF64748B))
+                        Text(labels.cancel, color = textMuted)
                     }
                 }
             )
@@ -754,9 +766,9 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFF1F222B), RoundedCornerShape(24.dp)),
+                        .border(1.dp, cardBorder, RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12))
+                    colors = CardDefaults.cardColors(containerColor = cardBg)
                 ) {
                     Column(
                         modifier = Modifier
@@ -768,7 +780,7 @@ fun SettingsScreen(
                             text = labels.selectExportFormat,
                             fontWeight = FontWeight.Black,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
+                            color = textColor
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -788,8 +800,8 @@ fun SettingsScreen(
                                         }
                                     }
                                 },
-                            colors = CardDefaults.cardColors(containerColor = Color.Black),
-                            border = BorderStroke(1.dp, Color(0xFF1F222B)),
+                            colors = CardDefaults.cardColors(containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, cardBorder),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -803,7 +815,7 @@ fun SettingsScreen(
                                 Text(
                                     text = labels.exportJsonDesc,
                                     fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
+                                    color = textMuted
                                 )
                             }
                         }
@@ -823,8 +835,8 @@ fun SettingsScreen(
                                         }
                                     }
                                 },
-                            colors = CardDefaults.cardColors(containerColor = Color.Black),
-                            border = BorderStroke(1.dp, Color(0xFF1F222B)),
+                            colors = CardDefaults.cardColors(containerColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                            border = BorderStroke(1.dp, cardBorder),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -838,7 +850,7 @@ fun SettingsScreen(
                                 Text(
                                     text = labels.exportCsvDesc,
                                     fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
+                                    color = textMuted
                                 )
                             }
                         }
@@ -849,7 +861,7 @@ fun SettingsScreen(
                             onClick = { showExportSelectionDialog = false },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text(labels.close, color = Color.White)
+                            Text(labels.close, color = textColor)
                         }
                     }
                 }
@@ -860,18 +872,18 @@ fun SettingsScreen(
         if (pendingRestoreUri != null) {
             AlertDialog(
                 onDismissRequest = { pendingRestoreUri = null },
-                containerColor = Color(0xFF0C0E12),
+                containerColor = cardBg,
                 title = {
                     Text(
                         text = labels.restoreConfirmTitle,
                         fontWeight = FontWeight.Black,
-                        color = Color.White
+                        color = textColor
                     )
                 },
                 text = {
                     Text(
                         text = labels.restoreConfirmDesc,
-                        color = Color(0xFF94A3B8),
+                        color = textMuted,
                         lineHeight = 20.sp
                     )
                 },
@@ -898,7 +910,7 @@ fun SettingsScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { pendingRestoreUri = null }) {
-                        Text(labels.cancel, color = Color(0xFF64748B))
+                        Text(labels.cancel, color = textMuted)
                     }
                 }
             )
@@ -908,7 +920,7 @@ fun SettingsScreen(
         if (showResetWarningDialog) {
             AlertDialog(
                 onDismissRequest = { showResetWarningDialog = false },
-                containerColor = Color(0xFF0C0E12),
+                containerColor = cardBg,
                 title = {
                     Text(
                         text = labels.resetConfirmTitle,
@@ -919,7 +931,7 @@ fun SettingsScreen(
                 text = {
                     Text(
                         text = labels.resetConfirmDesc,
-                        color = Color(0xFF94A3B8),
+                        color = textMuted,
                         lineHeight = 20.sp
                     )
                 },
@@ -937,7 +949,7 @@ fun SettingsScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showResetWarningDialog = false }) {
-                        Text(labels.cancel, color = Color(0xFF64748B))
+                        Text(labels.cancel, color = textMuted)
                     }
                 }
             )

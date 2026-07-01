@@ -32,6 +32,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.isSystemInDarkTheme
 import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.Trade
@@ -59,6 +60,17 @@ fun DashboardScreen(
     val stats by viewModel.statistics.collectAsStateWithLifecycle()
     val currency by viewModel.currency.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+
+    val isDark = when (themeMode) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> isSystemInDarkTheme()
+    }
+    val cardBg = if (isDark) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isDark) Color(0xFF1F222B) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    val textColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+    val textMuted = if (isDark) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
     val initialBalance by viewModel.initialBalance.collectAsStateWithLifecycle()
     val accountName by viewModel.accountName.collectAsStateWithLifecycle()
     val isAccountInitialized by viewModel.isAccountInitialized.collectAsStateWithLifecycle()
@@ -176,9 +188,9 @@ fun DashboardScreen(
                             }
                         },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                            containerColor = if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background,
-                            titleContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground,
-                            actionIconContentColor = if (activeTab == 0) Color.White else MaterialTheme.colorScheme.onBackground
+                            containerColor = if (activeTab == 0 && isDark) Color.Black else MaterialTheme.colorScheme.background,
+                            titleContentColor = if (activeTab == 0 && isDark) Color.White else MaterialTheme.colorScheme.onBackground,
+                            actionIconContentColor = if (activeTab == 0 && isDark) Color.White else MaterialTheme.colorScheme.onBackground
                         )
                     )
                 },
@@ -196,7 +208,7 @@ fun DashboardScreen(
                 bottomBar = {
                     if (!isWideScreen) {
                         NavigationBar(
-                            containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            containerColor = if (activeTab == 0 && isDark) Color(0xFF0C0E12) else if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface,
                             modifier = Modifier.clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                         ) {
                             NavigationBarItem(
@@ -236,12 +248,12 @@ fun DashboardScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(if (activeTab == 0) Color.Black else MaterialTheme.colorScheme.background)
+                        .background(if (activeTab == 0 && isDark) Color.Black else MaterialTheme.colorScheme.background)
                         .padding(paddingValues)
                 ) {
                     if (isWideScreen) {
                         NavigationRail(
-                            containerColor = if (activeTab == 0) Color(0xFF0C0E12) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            containerColor = if (activeTab == 0 && isDark) Color(0xFF0C0E12) else if (isDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface,
                             header = {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Box(
@@ -372,9 +384,9 @@ fun DashboardScreen(
                                                 .testTag("key_metrics_card"),
                                             shape = RoundedCornerShape(20.dp),
                                             colors = CardDefaults.cardColors(
-                                                containerColor = Color(0xFF0C0E12)
+                                                containerColor = cardBg
                                             ),
-                                            border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                            border = BorderStroke(1.dp, cardBorder)
                                         ) {
                                             Column(
                                                 modifier = Modifier.padding(20.dp),
@@ -419,7 +431,7 @@ fun DashboardScreen(
                                                 )
 
                                                 Spacer(modifier = Modifier.height(18.dp))
-                                                HorizontalDivider(color = Color(0xFF1F222B))
+                                                HorizontalDivider(color = cardBorder)
                                                 Spacer(modifier = Modifier.height(16.dp))
 
                                                 // Smaller stats in 2x2 grid
@@ -511,8 +523,8 @@ fun DashboardScreen(
                                                 .weight(1.2f)
                                                 .testTag("equity_curve_card"),
                                             shape = RoundedCornerShape(20.dp),
-                                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                                            border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                                            border = BorderStroke(1.dp, cardBorder)
                                         ) {
                                             Column(modifier = Modifier.padding(16.dp)) {
                                                 Row(
@@ -563,9 +575,9 @@ fun DashboardScreen(
                                             .testTag("key_metrics_card"),
                                         shape = RoundedCornerShape(20.dp),
                                         colors = CardDefaults.cardColors(
-                                            containerColor = Color(0xFF0C0E12)
+                                            containerColor = cardBg
                                         ),
-                                        border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                        border = BorderStroke(1.dp, cardBorder)
                                     ) {
                                         Column(
                                             modifier = Modifier.padding(20.dp),
@@ -610,7 +622,7 @@ fun DashboardScreen(
                                             )
 
                                             Spacer(modifier = Modifier.height(18.dp))
-                                            HorizontalDivider(color = Color(0xFF1F222B))
+                                            HorizontalDivider(color = cardBorder)
                                             Spacer(modifier = Modifier.height(16.dp))
 
                                             // Smaller stats in 2x2 grid
@@ -704,8 +716,8 @@ fun DashboardScreen(
                                             .fillMaxWidth()
                                             .testTag("equity_curve_card"),
                                         shape = RoundedCornerShape(20.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                                        border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                                        border = BorderStroke(1.dp, cardBorder)
                                     ) {
                                         Column(modifier = Modifier.padding(16.dp)) {
                                             Row(
@@ -766,9 +778,9 @@ fun DashboardScreen(
                                         .testTag("daily_summary_card"),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFF0C0E12)
+                                        containerColor = cardBg
                                     ),
-                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                    border = BorderStroke(1.dp, cardBorder)
                                 ) {
                                     Column(modifier = Modifier.padding(20.dp)) {
                                         Row(
@@ -833,7 +845,7 @@ fun DashboardScreen(
                                         }
 
                                         Spacer(modifier = Modifier.height(12.dp))
-                                        HorizontalDivider(color = Color(0xFF1F222B))
+                                        HorizontalDivider(color = cardBorder)
                                         Spacer(modifier = Modifier.height(8.dp))
 
                                         Row(
@@ -859,8 +871,8 @@ fun DashboardScreen(
                                         .fillMaxWidth()
                                         .testTag("recent_trades_card"),
                                     shape = RoundedCornerShape(20.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0E12)),
-                                    border = BorderStroke(1.dp, Color(0xFF1F222B))
+                                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                                    border = BorderStroke(1.dp, cardBorder)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Row(
