@@ -733,7 +733,7 @@ class DisciplineGoldRule : InsightRule {
         if (context.disciplineScore >= 85) {
             return TradingInsight(
                 title = if (lang == "fa") "انضباط معاملاتی فوق‌العاده" else if (lang == "ar") "مستوى انضباط مثالي" else "Elite Discipline Score",
-                description = if (lang == "fa") "امتیاز انضباط شما $ {context.disciplineScore} است. شما به خوبی چک‌لیست‌ها را تایید می‌کنید و از روی هیجان ترید نمی‌کنید. عالی است!"
+                description = if (lang == "fa") "امتیاز انضباط شما ${context.disciplineScore} است. شما به خوبی چک‌لیست‌ها را تایید می‌کنید و از روی هیجان ترید نمی‌کنید. عالی است!"
                               else if (lang == "ar") "معدل انضباطك المتميز ${context.disciplineScore} يوضح مدى احترافيتك."
                               else "With a stellar score of ${context.disciplineScore}, you are adhering strictly to your pre-trade checklist and maintaining structural control.",
                 type = InsightType.POSITIVE,

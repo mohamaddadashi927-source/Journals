@@ -78,10 +78,11 @@ fun CalendarTab(
 
     // List of trades on selected day
     val selectedDayTrades = remember(trades, selectedDayState) {
-        if (selectedDayState == null) emptyList()
+        val state = selectedDayState
+        if (state == null) emptyList()
         else {
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            val selectedDateStr = sdf.format(selectedDayState!!.time)
+            val selectedDateStr = sdf.format(state.time)
             trades.filter { sdf.format(Date(it.dateTime)) == selectedDateStr }
         }
     }
@@ -265,10 +266,11 @@ fun CalendarTab(
                                     val formattedDate = sdf.format(dayCal.time)
                                     val dailyPnl = dailyPnLMap[formattedDate]
 
-                                    val isSelected = selectedDayState != null &&
-                                            selectedDayState!!.get(Calendar.YEAR) == dayCal.get(Calendar.YEAR) &&
-                                            selectedDayState!!.get(Calendar.MONTH) == dayCal.get(Calendar.MONTH) &&
-                                            selectedDayState!!.get(Calendar.DAY_OF_MONTH) == dayNum
+                                    val sel = selectedDayState
+                                    val isSelected = sel != null &&
+                                            sel.get(Calendar.YEAR) == dayCal.get(Calendar.YEAR) &&
+                                            sel.get(Calendar.MONTH) == dayCal.get(Calendar.MONTH) &&
+                                            sel.get(Calendar.DAY_OF_MONTH) == dayNum
 
                                     Box(
                                         modifier = Modifier
@@ -431,32 +433,33 @@ fun CalendarTab(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    if (dailyJournal != null) {
+                    val dj = dailyJournal
+                    if (dj != null) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (dailyJournal!!.emotions.isNotEmpty()) {
+                            if (dj.emotions.isNotEmpty()) {
                                 Text(
-                                    text = "🧠 " + (if (language == "fa") "حالت روحی احساسی: " else "Emotions: ") + dailyJournal!!.emotions,
+                                    text = "🧠 " + (if (language == "fa") "حالت روحی احساسی: " else "Emotions: ") + dj.emotions,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            if (dailyJournal!!.content.isNotEmpty()) {
+                            if (dj.content.isNotEmpty()) {
                                 Text(
-                                    text = "📝 " + (if (language == "fa") "خلاصه بازار: " else "Market Note: ") + dailyJournal!!.content,
+                                    text = "📝 " + (if (language == "fa") "خلاصه بازار: " else "Market Note: ") + dj.content,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            if (dailyJournal!!.mistakes.isNotEmpty()) {
+                            if (dj.mistakes.isNotEmpty()) {
                                 Text(
-                                    text = "❌ " + (if (language == "fa") "اشتباهات معاملاتی: " else "Mistakes: ") + dailyJournal!!.mistakes,
+                                    text = "❌ " + (if (language == "fa") "اشتباهات معاملاتی: " else "Mistakes: ") + dj.mistakes,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = CrimsonRed
                                 )
                             }
-                            if (dailyJournal!!.lessons.isNotEmpty()) {
+                            if (dj.lessons.isNotEmpty()) {
                                 Text(
-                                    text = "💡 " + (if (language == "fa") "درس آموخته شده: " else "Lessons: ") + dailyJournal!!.lessons,
+                                    text = "💡 " + (if (language == "fa") "درس آموخته شده: " else "Lessons: ") + dj.lessons,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = EmeraldGreen
                                 )

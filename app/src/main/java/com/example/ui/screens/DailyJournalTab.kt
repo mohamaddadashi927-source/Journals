@@ -237,8 +237,8 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
     }
 
     // Edit Dialog
-    if (selectedJournalForEdit != null) {
-        val editing = selectedJournalForEdit!!
+    val editing = selectedJournalForEdit
+    if (editing != null) {
         var noteContent by remember { mutableStateOf(editing.content) }
         var noteEmotions by remember { mutableStateOf(editing.emotions) }
         var noteMistakes by remember { mutableStateOf(editing.mistakes) }
@@ -317,8 +317,8 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
     }
 
     // Delete confirmation
-    if (journalToDelete != null) {
-        val deleting = journalToDelete!!
+    val deleting = journalToDelete
+    if (deleting != null) {
         AlertDialog(
             onDismissRequest = { journalToDelete = null },
             confirmButton = {

@@ -26,13 +26,16 @@ object PdfExportHelper {
 
     fun generateTradeDetailPdf(context: Context, trade: Trade, currencySymbol: String, language: String): Uri? {
         val pdfDocument = PdfDocument()
-        
-        // A4 page specifications: 595 x 842 points
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas = page.canvas
+        var page1: PdfDocument.Page? = null
+        var page2: PdfDocument.Page? = null
+        var imageBitmap: Bitmap? = null
 
         try {
+            // A4 page specifications: 595 x 842 points
+            val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+            page1 = pdfDocument.startPage(pageInfo)
+            val canvas = page1.canvas
+
             // Draw background for Page 1
             val bgPaint = Paint().apply {
                 color = android.graphics.Color.parseColor("#F7F9FC")
@@ -195,7 +198,7 @@ object PdfExportHelper {
             valuePaint.color = android.graphics.Color.parseColor(pnlTextColor)
             val pnlValueStr = if (isClosed) {
                 val prefix = if (isProfit) "+" else ""
-                "$prefix${String.format(Locale.US, "%,.2f", trade.pnl)} $currencySymbol"
+                "$prefix${String.format(Locale.US, "%,.2f", trade.pnl ?: 0.0)} $currencySymbol"
             } else {
                 if (language == "fa") "درحال معامله" else if (language == "ar") "قيد التداول" else "Open Position"
             }
@@ -340,7 +343,6 @@ object PdfExportHelper {
             }
 
             // Check if there is an image to embed
-            var imageBitmap: Bitmap? = null
             if (!trade.imagePath.isNullOrBlank()) {
                 try {
                     val file = File(trade.imagePath)
@@ -372,12 +374,13 @@ object PdfExportHelper {
             }
             canvas.drawText(footerText1, 297.5f, 810f, footerPaint)
 
-            pdfDocument.finishPage(page)
+            pdfDocument.finishPage(page1)
+            page1 = null // Mark finished
 
             // If we have an image, let's create Page 2
             if (imageBitmap != null) {
                 val pageInfo2 = PdfDocument.PageInfo.Builder(595, 842, 2).create()
-                val page2 = pdfDocument.startPage(pageInfo2)
+                page2 = pdfDocument.startPage(pageInfo2)
                 val canvas2 = page2.canvas
 
                 // Background
@@ -437,6 +440,7 @@ object PdfExportHelper {
                 canvas2.drawText(footerText2, 297.5f, 810f, footerPaint)
 
                 pdfDocument.finishPage(page2)
+                page2 = null // Mark finished
             }
 
             // Write PDF to cache shared folder
@@ -449,15 +453,26 @@ object PdfExportHelper {
                 file.delete()
             }
 
-            pdfDocument.writeTo(file.outputStream())
-            pdfDocument.close()
+            file.outputStream().use { fos ->
+                pdfDocument.writeTo(fos)
+            }
 
             return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
         } catch (e: Exception) {
             Log.e("PdfExportHelper", "Failed to generate PDF", e)
-            pdfDocument.close()
             return null
+        } finally {
+            try {
+                page1?.let { pdfDocument.finishPage(it) }
+                page2?.let { pdfDocument.finishPage(it) }
+            } catch (ignored: Exception) {}
+            try {
+                pdfDocument.close()
+            } catch (ignored: Exception) {}
+            try {
+                imageBitmap?.recycle()
+            } catch (ignored: Exception) {}
         }
     }
 

@@ -104,12 +104,17 @@ fun TradeDetailScreen(
                                 coroutineScope.launch {
                                     val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, t, currencySymbol, language)
                                     if (pdfUri != null) {
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                            type = "application/pdf"
-                                            putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
-                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        try {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                                type = "application/pdf"
+                                                putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
+                                                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            }
+                                            context.startActivity(android.content.Intent.createChooser(intent, "اشتراک‌گذاری گزارش PDF"))
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("TradeDetailScreen", "Failed to share PDF", e)
+                                            Toast.makeText(context, "خطا در اشتراک‌گذاری گزارش PDF", Toast.LENGTH_SHORT).show()
                                         }
-                                        context.startActivity(android.content.Intent.createChooser(intent, "اشتراک‌گذاری گزارش PDF"))
                                     } else {
                                         Toast.makeText(context, "خطا در ایجاد گزارش PDF", Toast.LENGTH_SHORT).show()
                                     }
@@ -453,7 +458,7 @@ fun TradeDetailScreen(
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 AsyncImage(
-                                                    model = File(activeZoomPath!!),
+                                                    model = File(activeZoomPath ?: ""),
                                                     contentDescription = "Zoomed Image",
                                                     modifier = Modifier.fillMaxWidth().wrapContentHeight()
                                                 )
@@ -572,12 +577,17 @@ fun TradeDetailScreen(
                                     coroutineScope.launch {
                                         val pdfUri = com.example.ui.pdf.PdfExportHelper.generateTradeDetailPdf(context, trade, currencySymbol, language)
                                         if (pdfUri != null) {
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                                type = "application/pdf"
-                                                putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
-                                                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            try {
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                                    type = "application/pdf"
+                                                    putExtra(android.content.Intent.EXTRA_STREAM, pdfUri)
+                                                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                }
+                                                context.startActivity(android.content.Intent.createChooser(intent, Loc.tr("share_print_title", language)))
+                                            } catch (e: Exception) {
+                                                android.util.Log.e("TradeDetailScreen", "Failed to share PDF from button", e)
+                                                Toast.makeText(context, Loc.tr("pdf_error", language), Toast.LENGTH_SHORT).show()
                                             }
-                                            context.startActivity(android.content.Intent.createChooser(intent, Loc.tr("share_print_title", language)))
                                         } else {
                                             Toast.makeText(context, Loc.tr("pdf_error", language), Toast.LENGTH_SHORT).show()
                                         }

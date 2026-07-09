@@ -94,70 +94,153 @@ fun DashboardScreen(
     val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        // Initial Account Configuration Dialog
+        // Initial Account Configuration Flow
         if (!isAccountInitialized) {
-            var tempName by remember { mutableStateOf("") }
-            var tempBalanceStr by remember { mutableStateOf("") }
-            var tempCurrency by remember { mutableStateOf("USD") }
+            var showLanguageSelection by remember { mutableStateOf(true) }
 
-            AlertDialog(
-                onDismissRequest = {}, // Cannot dismiss until initialized
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            val bal = tempBalanceStr.toDoubleOrNull() ?: 10000.0
-                            val name = tempName.ifEmpty {
-                                if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account"
-                            }
-                            viewModel.initializeAccount(name, bal)
-                            viewModel.setCurrency(tempCurrency)
-                        },
-                        enabled = tempBalanceStr.isNotEmpty() && (tempBalanceStr.toDoubleOrNull() ?: 0.0) >= 0.0
-                    ) {
-                        Text(Loc.tr("start", language))
-                    }
-                },
-                title = {
-                    Text(Loc.tr("initial_balance_title", language), fontWeight = FontWeight.Bold)
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(Loc.tr("initial_balance_desc", language), fontSize = 13.sp)
+            if (showLanguageSelection) {
+                var selectedLanguageCode by remember { mutableStateOf(language) }
 
-                        OutlinedTextField(
-                            value = tempName,
-                            onValueChange = { tempName = it },
-                            label = { Text(Loc.tr("account_name", language)) },
-                            placeholder = { Text(if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = tempBalanceStr,
-                            onValueChange = { tempBalanceStr = it },
-                            label = { Text(Loc.tr("initial_balance", language)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("10000") }
-                        )
-
-                        Text(Loc.tr("currency", language), style = MaterialTheme.typography.labelMedium)
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                AlertDialog(
+                    onDismissRequest = {}, // Cannot dismiss until completed
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.setLanguage(selectedLanguageCode)
+                                showLanguageSelection = false
+                            },
+                            modifier = Modifier.testTag("lang_continue_button")
+                        ) {
+                            Text("Continue")
+                        }
+                    },
+                    title = {
+                        Text("Select App Language", fontWeight = FontWeight.Bold)
+                    },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            listOf("USD" to "$", "IRT" to "تومان", "USDT" to "USDT").forEach { (code, sym) ->
-                                val isSel = tempCurrency == code
-                                FilterChip(
-                                    selected = isSel,
-                                    onClick = { tempCurrency = code },
-                                    label = { Text("$code ($sym)", fontSize = 11.sp) }
-                                )
+                            Text(
+                                text = "Please select your preferred language. All sections and configurations will instantly adapt to your choice.",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            val langOptions = listOf(
+                                Triple("en", "English", "🇺🇸"),
+                                Triple("fa", "فارسی (Persian)", "🇮🇷"),
+                                Triple("ar", "العربية (Arabic)", "🇸🇦")
+                            )
+
+                            langOptions.forEach { (code, name, flag) ->
+                                val isSelected = selectedLanguageCode == code
+                                Card(
+                                    onClick = { 
+                                        selectedLanguageCode = code
+                                        viewModel.setLanguage(code)
+                                    },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .testTag("lang_option_$code")
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(flag, fontSize = 20.sp)
+                                        Text(name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                        RadioButton(
+                                            selected = isSelected,
+                                            onClick = { 
+                                                selectedLanguageCode = code
+                                                viewModel.setLanguage(code)
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+            } else {
+                var tempName by remember { mutableStateOf("") }
+                var tempBalanceStr by remember { mutableStateOf("") }
+                var tempCurrency by remember { mutableStateOf("USD") }
+
+                AlertDialog(
+                    onDismissRequest = {}, // Cannot dismiss until initialized
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val bal = tempBalanceStr.toDoubleOrNull() ?: 10000.0
+                                val name = tempName.ifEmpty {
+                                    if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account"
+                                }
+                                viewModel.initializeAccount(name, bal)
+                                viewModel.setCurrency(tempCurrency)
+                            },
+                            enabled = tempBalanceStr.isNotEmpty() && (tempBalanceStr.toDoubleOrNull() ?: 0.0) >= 0.0,
+                            modifier = Modifier.testTag("account_start_button")
+                        ) {
+                            Text(Loc.tr("start", language))
+                        }
+                    },
+                    title = {
+                        Text(Loc.tr("initial_balance_title", language), fontWeight = FontWeight.Bold)
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(Loc.tr("initial_balance_desc", language), fontSize = 13.sp)
+
+                            OutlinedTextField(
+                                value = tempName,
+                                onValueChange = { tempName = it },
+                                label = { Text(Loc.tr("account_name", language)) },
+                                placeholder = { Text(if (language == "fa") "حساب اصلی" else if (language == "ar") "حساب شخصي" else "Personal Account") },
+                                modifier = Modifier.fillMaxWidth().testTag("account_name_input")
+                            )
+
+                            OutlinedTextField(
+                                value = tempBalanceStr,
+                                onValueChange = { tempBalanceStr = it },
+                                label = { Text(Loc.tr("initial_balance", language)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.fillMaxWidth().testTag("initial_balance_input"),
+                                placeholder = { Text("10000") }
+                            )
+
+                            Text(Loc.tr("currency", language), style = MaterialTheme.typography.labelMedium)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                listOf("USD" to "$", "IRT" to "تومان", "USDT" to "USDT").forEach { (code, sym) ->
+                                    val isSel = tempCurrency == code
+                                    FilterChip(
+                                        selected = isSel,
+                                        onClick = { tempCurrency = code },
+                                        label = { Text("$code ($sym)", fontSize = 11.sp) },
+                                        modifier = Modifier.testTag("currency_chip_$code")
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
+            }
         }
 
         val resolvedAccountName = if (accountName == "حساب شخصی") Loc.tr("personal_account", language) else accountName

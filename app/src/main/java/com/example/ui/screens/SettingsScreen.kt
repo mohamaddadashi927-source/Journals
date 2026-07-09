@@ -92,12 +92,21 @@ fun SettingsScreen(
 
     // Helper to share generated backup files securely
     val shareFile = { uri: Uri, mimeType: String, chooserTitle: String ->
-        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = mimeType
-            putExtra(android.content.Intent.EXTRA_STREAM, uri)
-            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = mimeType
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, chooserTitle))
+        } catch (e: Exception) {
+            android.util.Log.e("SettingsScreen", "Failed to share file", e)
+            Toast.makeText(
+                context,
+                if (language == "fa") "خطا در اشتراک‌گذاری فایل" else if (language == "ar") "خطأ في مشاركة الملف" else "Failed to share file",
+                Toast.LENGTH_SHORT
+            ).show()
         }
-        context.startActivity(android.content.Intent.createChooser(intent, chooserTitle))
     }
 
     // Layout direction helper

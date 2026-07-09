@@ -62,6 +62,7 @@ object BackupHelper {
                     put("postTradeNotes", t.postTradeNotes)
                     put("richNotes", t.richNotes)
                     put("emotionalState", t.emotionalState)
+                    put("customPnl", t.customPnl ?: JSONObject.NULL)
                     put("accountId", t.accountId)
                 }
                 tradesArray.put(obj)
@@ -286,6 +287,7 @@ object BackupHelper {
                             postTradeNotes = obj.optString("postTradeNotes", ""),
                             richNotes = obj.optString("richNotes", ""),
                             emotionalState = obj.optString("emotionalState", ""),
+                            customPnl = if (obj.has("customPnl") && !obj.isNull("customPnl")) obj.getDouble("customPnl") else null,
                             accountId = obj.optString("accountId", "acc_default")
                         )
                         db.tradeDao().insertTrade(trade)

@@ -35,7 +35,7 @@ enum class SortType {
 class JournalViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application, viewModelScope)
-    private val repository = JournalRepository(db.tradeDao(), db.marketDao(), db.tagDao())
+    private val repository = JournalRepository(db.tradeDao(), db.marketDao(), db.tagDao(), db.dailyJournalDao(), db.checklistItemDao())
 
     private val sharedPrefs = application.getSharedPreferences("trading_journal_settings", Context.MODE_PRIVATE)
 
@@ -69,17 +69,14 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     val weeklyGoal = MutableStateFlow(sharedPrefs.getFloat("weekly_goal", 500f).toDouble())
     val monthlyGoal = MutableStateFlow(sharedPrefs.getFloat("monthly_goal", 2000f).toDouble())
 
-    // Daily Journal & Checklist DAOs
-    private val dailyJournalDao = db.dailyJournalDao()
-    private val checklistItemDao = db.checklistItemDao()
-
-    val allDailyJournals: StateFlow<List<com.example.data.model.DailyJournal>> = dailyJournalDao.getAllDailyJournals()
+    // Daily Journal & Checklist Flows
+    val allDailyJournals: StateFlow<List<com.example.data.model.DailyJournal>> = repository.allDailyJournals
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val allChecklistItems: StateFlow<List<com.example.data.model.ChecklistItem>> = checklistItemDao.getAllChecklistItems()
+    val allChecklistItems: StateFlow<List<com.example.data.model.ChecklistItem>> = repository.allChecklistItems
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val enabledChecklistItems: StateFlow<List<com.example.data.model.ChecklistItem>> = checklistItemDao.getEnabledChecklistItems()
+    val enabledChecklistItems: StateFlow<List<com.example.data.model.ChecklistItem>> = repository.enabledChecklistItems
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
@@ -516,30 +513,46 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     // Daily Journal Operations
     fun getDailyJournalByDate(dateString: String): Flow<com.example.data.model.DailyJournal?> =
-        dailyJournalDao.getDailyJournalByDate(dateString)
+        repository.getDailyJournalByDate(dateString)
 
     fun saveDailyJournal(journal: com.example.data.model.DailyJournal) {
         viewModelScope.launch(Dispatchers.IO) {
-            dailyJournalDao.insertDailyJournal(journal)
+            try {
+                repository.insertDailyJournal(journal)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error saving daily journal", e)
+            }
         }
     }
 
     fun deleteDailyJournal(journal: com.example.data.model.DailyJournal) {
         viewModelScope.launch(Dispatchers.IO) {
-            dailyJournalDao.deleteDailyJournal(journal)
+            try {
+                repository.deleteDailyJournal(journal)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error deleting daily journal", e)
+            }
         }
     }
 
     // Checklist Operations
     fun addChecklistItem(title: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            checklistItemDao.insertChecklistItem(com.example.data.model.ChecklistItem(title = title))
+            try {
+                repository.insertChecklistItem(com.example.data.model.ChecklistItem(title = title))
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error adding checklist item", e)
+            }
         }
     }
 
     fun deleteChecklistItem(item: com.example.data.model.ChecklistItem) {
         viewModelScope.launch(Dispatchers.IO) {
-            checklistItemDao.deleteChecklistItem(item)
+            try {
+                repository.deleteChecklistItem(item)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error deleting checklist item", e)
+            }
         }
     }
 
@@ -549,68 +562,100 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
 
     fun insertTrade(trade: Trade) {
         viewModelScope.launch(Dispatchers.IO) {
-            val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
-                trade.copy(accountId = activeAccountId.value)
-            } else {
-                trade
+            try {
+                val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
+                    trade.copy(accountId = activeAccountId.value)
+                } else {
+                    trade
+                }
+                repository.insertTrade(tradeWithAccount)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error inserting trade", e)
             }
-            repository.insertTrade(tradeWithAccount)
         }
     }
 
     fun updateTrade(trade: Trade) {
         viewModelScope.launch(Dispatchers.IO) {
-            val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
-                trade.copy(accountId = activeAccountId.value)
-            } else {
-                trade
+            try {
+                val tradeWithAccount = if (trade.accountId == "acc_default" || trade.accountId.isEmpty()) {
+                    trade.copy(accountId = activeAccountId.value)
+                } else {
+                    trade
+                }
+                repository.updateTrade(tradeWithAccount)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error updating trade", e)
             }
-            repository.updateTrade(tradeWithAccount)
         }
     }
 
     fun deleteTrade(trade: Trade) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteTrade(trade)
+            try {
+                repository.deleteTrade(trade)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error deleting trade", e)
+            }
         }
     }
 
     fun resetAllData() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteAllTrades()
-            sharedPrefs.edit()
-                .remove("account_name")
-                .remove("initial_balance")
-                .remove("is_account_initialized")
-                .apply()
-            accountName.value = "حساب شخصی"
-            initialBalance.value = 10000.0
-            isAccountInitialized.value = false
+            try {
+                repository.deleteAllTrades()
+                sharedPrefs.edit()
+                    .remove("account_name")
+                    .remove("initial_balance")
+                    .remove("is_account_initialized")
+                    .apply()
+                accountName.value = "حساب شخصی"
+                initialBalance.value = 10000.0
+                isAccountInitialized.value = false
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error resetting all data", e)
+            }
         }
     }
 
     // Markets & Tags Operations
     fun addMarket(name: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.insertMarket(Market(name = name))
+            try {
+                repository.insertMarket(Market(name = name))
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error adding market", e)
+            }
         }
     }
 
     fun deleteMarket(market: Market) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteMarket(market)
+            try {
+                repository.deleteMarket(market)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error deleting market", e)
+            }
         }
     }
 
     fun addTag(name: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.insertTag(Tag(name = name))
+            try {
+                repository.insertTag(Tag(name = name))
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error adding tag", e)
+            }
         }
     }
 
     fun deleteTag(tag: Tag) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteTag(tag)
+            try {
+                repository.deleteTag(tag)
+            } catch (e: Exception) {
+                Log.e("JournalViewModel", "Error deleting tag", e)
+            }
         }
     }
 
@@ -651,8 +696,8 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
             val dbTrades = repository.allTrades.first()
             val dbMarkets = repository.allMarkets.first()
             val dbTags = repository.allTags.first()
-            val dbJournals = dailyJournalDao.getAllDailyJournals().first()
-            val dbChecklist = checklistItemDao.getAllChecklistItems().first()
+            val dbJournals = repository.allDailyJournals.first()
+            val dbChecklist = repository.allChecklistItems.first()
 
             com.example.data.backup.BackupHelper.exportDatabaseToJson(
                 context, dbTrades, dbJournals, dbMarkets, dbTags, dbChecklist
