@@ -60,78 +60,8 @@ class JournalViewModel(application: Application) : AndroidViewModel(application)
     val accountsList = MutableStateFlow<List<TradingAccount>>(emptyList())
     val activeAccountId = MutableStateFlow(sharedPrefs.getString("active_account_id", "acc_default") ?: "acc_default")
 
-    // Remote Config Data Models
-    data class RemoteConfigInfo(
-        val latestVersion: String = "",
-        val forceUpdate: Boolean = false,
-        val message: String = "",
-        val appStatus: String = "active"
-    )
-
-    data class RemoteConfigState(
-        val config: RemoteConfigInfo? = null,
-        val isLoading: Boolean = false,
-        val error: String? = null
-    )
-
-    val remoteConfigState = MutableStateFlow(RemoteConfigState())
-
-    fun isVersionDifferent(v1: String, v2: String): Boolean {
-        val clean1 = v1.replace(Regex("[^0-9.]"), "").split(".")
-        val clean2 = v2.replace(Regex("[^0-9.]"), "").split(".")
-        val maxLen = maxOf(clean1.size, clean2.size)
-        for (i in 0 until maxLen) {
-            val num1 = clean1.getOrNull(i)?.toIntOrNull() ?: 0
-            val num2 = clean2.getOrNull(i)?.toIntOrNull() ?: 0
-            if (num1 != num2) {
-                return true
-            }
-        }
-        return false
-    }
-
-    fun fetchRemoteConfig() {
-        viewModelScope.launch {
-            remoteConfigState.value = RemoteConfigState(isLoading = true)
-            val result = withContext(Dispatchers.IO) {
-                try {
-                    val url = java.net.URL("https://journal.xo.je/wp-json/tradejrnl/v1/config")
-                    val connection = url.openConnection() as java.net.HttpURLConnection
-                    connection.requestMethod = "GET"
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 5000
-                    connection.connect()
-
-                    if (connection.responseCode == 200) {
-                        val responseText = connection.inputStream.bufferedReader().use { it.readText() }
-                        val json = JSONObject(responseText)
-                        val latestVersion = json.optString("latest_version", "1.0.0")
-                        val forceUpdate = json.optBoolean("force_update", false)
-                        val message = json.optString("message", "")
-                        val appStatus = json.optString("app_status", "active")
-                        RemoteConfigState(
-                            config = RemoteConfigInfo(
-                                latestVersion = latestVersion,
-                                forceUpdate = forceUpdate,
-                                message = message,
-                                appStatus = appStatus
-                            )
-                        )
-                    } else {
-                        RemoteConfigState(error = "HTTP error: ${connection.responseCode}")
-                    }
-                } catch (e: Exception) {
-                    Log.e("JournalViewModel", "Remote config fetch failed", e)
-                    RemoteConfigState(error = e.localizedMessage ?: "Unknown error")
-                }
-            }
-            remoteConfigState.value = result
-        }
-    }
-
     init {
         loadAccounts()
-        fetchRemoteConfig()
     }
 
     // Trading Goals
