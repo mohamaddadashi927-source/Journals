@@ -94,6 +94,81 @@ fun DashboardScreen(
     val layoutDirection = if (language == "en") LayoutDirection.Ltr else LayoutDirection.Rtl
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        val remoteConfigState by viewModel.remoteConfigState.collectAsStateWithLifecycle()
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val currentVersion = remember(context) {
+            try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
+            } catch (e: Exception) {
+                "1.0"
+            }
+        }
+
+        val isDifferent = remember(remoteConfigState.config, currentVersion) {
+            val configVersion = remoteConfigState.config?.latestVersion ?: ""
+            if (configVersion.isNotEmpty()) {
+                viewModel.isVersionDifferent(configVersion, currentVersion)
+            } else {
+                false
+            }
+        }
+
+        val appStatus = remoteConfigState.config?.appStatus ?: "active"
+        val forceUpdate = remoteConfigState.config?.forceUpdate ?: false
+        val message = remoteConfigState.config?.message ?: ""
+
+        // 1. App Disabled (Blocking)
+        if (appStatus == "disabled") {
+            val titleText = if (language == "fa") "برنامه غیرفعال است" else if (language == "ar") "التطبيق معطل" else "App is disabled"
+            val descText = if (language == "fa") "برنامه توسط مدیریت غیرفعال شده است." else if (language == "ar") "تم تعطيل التطبيق من قبل المشرف." else "The application has been disabled by the administrator."
+            AlertDialog(
+                onDismissRequest = {}, // blocking
+                confirmButton = {},
+                dismissButton = {},
+                title = { Text(titleText, fontWeight = FontWeight.Bold) },
+                text = { Text(descText) },
+                modifier = Modifier.testTag("app_disabled_dialog")
+            )
+        }
+        // 2. Force Update (Blocking)
+        else if (forceUpdate && isDifferent) {
+            val titleText = if (language == "fa") "بروزرسانی اجباری" else if (language == "ar") "تحديث إجباري" else "Update Required"
+            val descText = if (language == "fa") {
+                "یک بروزرسانی اجباری برای ادامه کار با برنامه نیاز است. لطفاً آخرین نسخه را دریافت کنید."
+            } else if (language == "ar") {
+                "يلزم إجراء تحديث إجباري للمتابعة. يرجى تنزيل أحدث إصدار."
+            } else {
+                "A mandatory update is required to continue. Please download the latest version."
+            }
+            AlertDialog(
+                onDismissRequest = {}, // blocking
+                confirmButton = {},
+                dismissButton = {},
+                title = { Text(titleText, fontWeight = FontWeight.Bold) },
+                text = { Text(descText) },
+                modifier = Modifier.testTag("force_update_dialog")
+            )
+        }
+        // 3. Non-blocking Popup Message
+        else if (message.isNotEmpty()) {
+            var showPopup by remember(message) { mutableStateOf(true) }
+            if (showPopup) {
+                val titleText = if (language == "fa") "پیام سیستم" else if (language == "ar") "رسالة النظام" else "System Message"
+                val dismissText = if (language == "fa") "تایید" else if (language == "ar") "موافق" else "OK"
+                AlertDialog(
+                    onDismissRequest = { showPopup = false },
+                    confirmButton = {
+                        Button(onClick = { showPopup = false }) {
+                            Text(dismissText)
+                        }
+                    },
+                    title = { Text(titleText, fontWeight = FontWeight.Bold) },
+                    text = { Text(message) },
+                    modifier = Modifier.testTag("system_message_dialog")
+                )
+            }
+        }
+
         // Initial Account Configuration Flow
         if (!isAccountInitialized) {
             var showLanguageSelection by remember { mutableStateOf(true) }
